@@ -1,8 +1,7 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { LineChart, Target, Clock, TrendingUp, User, Users, CircleBolt } from "lucide-react";
+import { LineChart, Target, Clock, TrendingUp, User, Users, Zap } from "lucide-react";
 
 interface ScorecardProps {
   totalRuns: number;
@@ -141,7 +140,7 @@ export default function Scoreboard({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-4">
-              <CircleBolt className="h-5 w-5 text-primary" />
+              <Zap className="h-5 w-5 text-primary" />
               <h3 className="font-bold text-lg">Bowler</h3>
             </div>
             

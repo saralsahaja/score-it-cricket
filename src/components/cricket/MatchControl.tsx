@@ -1,9 +1,8 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, UserCheck, CircleBolt, Slash, Plus } from "lucide-react";
+import { User, UserCheck, Zap, Slash, Plus } from "lucide-react";
 
 interface MatchControlProps {
   teamA: string[];
@@ -91,7 +90,7 @@ export default function MatchControl({
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-4">
-                <CircleBolt className="h-5 w-5 text-primary" />
+                <Zap className="h-5 w-5 text-primary" />
                 <h3 className="font-bold text-lg">Select Bowler</h3>
               </div>
               
