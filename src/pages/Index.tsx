@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export default function Index() {
 
   const [batsmen, setBatsmen] = useState<BatsmanStats[]>([]);
   const [bowler, setBowler] = useState<BowlerStats | null>(null);
+  const [bowlersList, setBowlersList] = useState<BowlerStats[]>([]);
   const [striker, setStriker] = useState<string | null>(null);
   const [nonStriker, setNonStriker] = useState<string | null>(null);
   const [currentBowler, setCurrentBowler] = useState<string | null>(null);
@@ -47,7 +49,35 @@ export default function Index() {
   const [totalRuns, setTotalRuns] = useState(0);
   const [totalBalls, setTotalBalls] = useState(0);
   const [wickets, setWickets] = useState(0);
-  const [target, setTarget] = useState(150);
+  const [firstInningsScore, setFirstInningsScore] = useState(0);
+  const [isSecondInnings, setIsSecondInnings] = useState(false);
+  
+  // Automatically start second innings when 10 wickets fall or 20 overs completed in first innings
+  useEffect(() => {
+    if (!isSecondInnings && (wickets >= 10 || totalBalls >= 120)) {
+      if (totalBalls > 0) { // Only if a match has started
+        toast.info("First innings complete! Starting second innings.", {
+          duration: 5000,
+        });
+        setFirstInningsScore(totalRuns);
+        setIsSecondInnings(true);
+        resetInnings();
+      }
+    }
+  }, [wickets, totalBalls, isSecondInnings]);
+
+  const resetInnings = () => {
+    setTotalRuns(0);
+    setTotalBalls(0);
+    setWickets(0);
+    setBatsmen([]);
+    setBowler(null);
+    setBowlersList([]);
+    setStriker(null);
+    setNonStriker(null);
+    setCurrentBowler(null);
+    setIsOverComplete(false);
+  };
 
   const handleAddPlayer = () => {
     if (playerName.trim() === "") {
@@ -90,7 +120,20 @@ export default function Index() {
   const handleSelectBowler = (player: string) => {
     if (bowler?.name === player) return;
     
-    setBowler({ name: player, runs: 0, balls: 0, wickets: 0, maidens: 0 });
+    const newBowler = { name: player, runs: 0, balls: 0, wickets: 0, maidens: 0 };
+    
+    // Check if this bowler has bowled before
+    const existingBowler = bowlersList.find(b => b.name === player);
+    
+    if (existingBowler) {
+      // Use existing stats
+      setBowler(existingBowler);
+    } else {
+      // Add new bowler to the list
+      setBowler(newBowler);
+      setBowlersList([...bowlersList, newBowler]);
+    }
+    
     setCurrentBowler(player);
     setIsOverComplete(false);
     toast.success(`${player} is now bowling`);
@@ -106,6 +149,7 @@ export default function Index() {
     if (!strikerStats) return;
     
     if (!extraType) {
+      // Normal runs
       strikerStats.runs += runs;
       strikerStats.balls += 1;
       
@@ -120,7 +164,10 @@ export default function Index() {
       bowlerStats.balls += 1;
 
       setBatsmen([...batsmen]);
-      setBowler({ ...bowlerStats });
+      
+      // Update bowler in the bowlers list
+      updateBowlerInList(bowlerStats);
+      
       setTotalRuns(totalRuns + runs);
       setTotalBalls(totalBalls + 1);
 
@@ -143,10 +190,12 @@ export default function Index() {
       const bowlerStats = bowler;
       
       if (extraType === 'wide' || extraType === 'noBall') {
+        // Wide and No Ball both add 1 extra run
         runsToAdd = runs + 1;
         bowlerStats.runs += runsToAdd;
         
         if (extraType === 'noBall') {
+          // No ball counts to batsman's score if they hit it
           strikerStats.runs += runs;
           strikerStats.balls += 1;
           
@@ -156,15 +205,24 @@ export default function Index() {
             strikerStats.sixes += 1;
           }
         }
-      } else if (extraType === 'overThrow') {
-        strikerStats.runs += runsToAdd;
+      } 
+      else if (extraType === 'legBye' || extraType === 'overThrow') {
+        // Leg byes don't count to batsman's runs but count for the team
+        // Overthrows do count to the team and are attributed to the batsman
+        if (extraType === 'overThrow') {
+          strikerStats.runs += runsToAdd;
+        }
+        
         strikerStats.balls += 1;
         bowlerStats.runs += runsToAdd;
         bowlerStats.balls += 1;
       }
       
       setBatsmen([...batsmen]);
-      setBowler({ ...bowlerStats });
+      
+      // Update bowler in the bowlers list
+      updateBowlerInList(bowlerStats);
+      
       setTotalRuns(totalRuns + runsToAdd);
       
       if (extraType !== 'wide' && extraType !== 'noBall') {
@@ -179,12 +237,17 @@ export default function Index() {
         }
       }
       
-      if (extraType !== 'wide' && runs % 2 === 1) {
+      if ((extraType !== 'wide' && runs % 2 === 1) || (extraType === 'legBye' && runs % 2 === 1)) {
         const temp = striker;
         setStriker(nonStriker);
         setNonStriker(temp);
       }
     }
+  };
+
+  const updateBowlerInList = (bowlerStats: BowlerStats) => {
+    setBowler({ ...bowlerStats });
+    setBowlersList(bowlersList.map(b => b.name === bowlerStats.name ? { ...bowlerStats } : b));
   };
 
   const handleWicket = () => {
@@ -205,7 +268,9 @@ export default function Index() {
     
     setWickets(wickets + 1);
     setTotalBalls(totalBalls + 1);
-    setBowler({ ...bowlerStats });
+    
+    // Update bowler in the bowlers list
+    updateBowlerInList(bowlerStats);
     
     if (bowlerStats.balls % 6 === 0) {
       setIsOverComplete(true);
@@ -216,6 +281,12 @@ export default function Index() {
     
     toast.error(`${striker} is OUT!`);
     setStriker(null);
+    
+    if (wickets >= 9) {
+      toast.error("All out! Innings complete.", {
+        duration: 5000,
+      });
+    }
   };
 
   const handleLogoUpload = (team: 'A' | 'B', e: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,10 +304,12 @@ export default function Index() {
     reader.readAsDataURL(file);
   };
 
+  // Calculate target and required stats
+  const target = isSecondInnings ? firstInningsScore + 1 : 0;
   const crr = totalBalls > 0 ? (totalRuns / (totalBalls / 6)).toFixed(2) : "0.00";
   const ballsLeft = 120 - totalBalls;
-  const runsLeft = target - totalRuns;
-  const rrr = ballsLeft > 0 ? (runsLeft / (ballsLeft / 6)).toFixed(2) : "0.00";
+  const runsLeft = isSecondInnings ? target - totalRuns : 0;
+  const rrr = ballsLeft > 0 && isSecondInnings ? (runsLeft / (ballsLeft / 6)).toFixed(2) : "0.00";
 
   return (
     <div className="min-h-screen bg-secondary/50">
@@ -281,6 +354,7 @@ export default function Index() {
               nonStriker={nonStriker}
               currentBowler={currentBowler}
               isOverComplete={isOverComplete}
+              wickets={wickets}
             />
           </TabsContent>
           
@@ -302,6 +376,8 @@ export default function Index() {
               teamBName={teamBName}
               teamALogo={teamALogo}
               teamBLogo={teamBLogo}
+              isSecondInnings={isSecondInnings}
+              bowlersList={bowlersList}
             />
           </TabsContent>
         </Tabs>
