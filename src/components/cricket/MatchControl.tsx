@@ -6,6 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { User, UserCheck, Zap, Slash, Plus, AlertTriangle, Waves, ArrowUpRight, LifeBuoy } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MatchControlProps {
   teamA: string[];
@@ -35,6 +37,36 @@ export default function MatchControl({
   wickets
 }: MatchControlProps) {
   const [extraRunsValue, setExtraRunsValue] = useState<number>(1);
+  const [showRunsPopover, setShowRunsPopover] = useState<string | null>(null);
+
+  const handleExtraRunsSelect = (runs: number, extraType: string) => {
+    handleAddRun(runs, extraType);
+    setShowRunsPopover(null);
+  };
+
+  const renderRunsSelector = (extraType: string) => {
+    return (
+      <div className="p-2 space-y-3">
+        <h4 className="font-semibold text-center text-sm">Select Runs</h4>
+        <div className="grid grid-cols-3 gap-2">
+          {[1, 2, 3, 4, 5, 6].map((run) => (
+            <Button
+              key={run}
+              size="sm"
+              variant={run === 4 || run === 6 ? "default" : "outline"}
+              className={`
+                ${run === 4 ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''}
+                ${run === 6 ? 'bg-purple-500 hover:bg-purple-600 text-white' : ''}
+              `}
+              onClick={() => handleExtraRunsSelect(run, extraType)}
+            >
+              {run}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <Card className="shadow-lg border-2 border-primary/20">
@@ -192,68 +224,97 @@ export default function MatchControl({
               <h4 className="text-sm font-medium mb-2">Extras</h4>
               
               <div className="grid grid-cols-2 gap-4 mb-3">
-                <div>
-                  <p className="text-xs font-medium mb-1">Extra Runs</p>
-                  <div className="grid grid-cols-6 gap-1">
-                    {[1, 2, 3, 4, 5, 6].map((value) => (
-                      <Button
-                        key={value}
-                        size="sm"
-                        variant={extraRunsValue === value ? "default" : "outline"}
-                        onClick={() => setExtraRunsValue(value)}
-                        className="h-8 w-8 p-0"
-                        disabled={wickets >= 10}
-                      >
-                        {value}
-                      </Button>
-                    ))}
-                  </div>
+                <div className="bg-slate-50 p-2 rounded-md">
+                  <p className="text-xs font-medium mb-1 text-slate-600">Extra Type Rules:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• Wide: +1 run, no striker change</li>
+                    <li>• No Ball: +1 run, no striker change</li>
+                    <li>• Leg Bye: Select runs, change striker for odd runs</li>
+                    <li>• Overthrow: Select runs, change striker for odd runs</li>
+                  </ul>
                 </div>
                 
-                <div className="text-xs text-muted-foreground">
-                  <p className="font-medium mb-1">Run Details</p>
-                  <p>Wide & No Ball: +1 run automatically</p>
-                  <p>Leg Bye & Overthrow: Select runs above</p>
+                <div className="flex flex-col justify-center">
+                  <p className="text-xs font-medium mb-2 text-slate-600">Quick Entry Guide:</p>
+                  <div className="text-xs text-muted-foreground flex items-center justify-between">
+                    <span>Auto +1 run</span>
+                    <span>Select runs</span>
+                  </div>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <Button 
-                  variant="outline" 
-                  className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
-                  onClick={() => handleAddRun(extraRunsValue, 'wide')}
-                  disabled={wickets >= 10}
-                >
-                  <Waves className="h-4 w-4 mr-1" />
-                  Wide
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
-                  onClick={() => handleAddRun(extraRunsValue, 'noBall')}
-                  disabled={wickets >= 10}
-                >
-                  <AlertTriangle className="h-4 w-4 mr-1" />
-                  No Ball
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
-                  onClick={() => handleAddRun(extraRunsValue, 'overThrow')}
-                  disabled={wickets >= 10}
-                >
-                  <ArrowUpRight className="h-4 w-4 mr-1" />
-                  Overthrow
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200"
-                  onClick={() => handleAddRun(extraRunsValue, 'legBye')}
-                  disabled={wickets >= 10}
-                >
-                  <LifeBuoy className="h-4 w-4 mr-1" />
-                  Leg Bye
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
+                      onClick={() => handleAddRun(1, 'wide')}
+                      disabled={wickets >= 10}
+                    >
+                      <Waves className="h-4 w-4 mr-1" />
+                      Wide
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">+1 run, no striker change</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
+                      onClick={() => handleAddRun(1, 'noBall')}
+                      disabled={wickets >= 10}
+                    >
+                      <AlertTriangle className="h-4 w-4 mr-1" />
+                      No Ball
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">+1 run, no striker change</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Popover open={showRunsPopover === 'overThrow'} onOpenChange={(open) => {
+                  if (open) setShowRunsPopover('overThrow');
+                  else setShowRunsPopover(null);
+                }}>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                      disabled={wickets >= 10}
+                    >
+                      <ArrowUpRight className="h-4 w-4 mr-1" />
+                      Overthrow
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    {renderRunsSelector('overThrow')}
+                  </PopoverContent>
+                </Popover>
+
+                <Popover open={showRunsPopover === 'legBye'} onOpenChange={(open) => {
+                  if (open) setShowRunsPopover('legBye');
+                  else setShowRunsPopover(null);
+                }}>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200"
+                      disabled={wickets >= 10}
+                    >
+                      <LifeBuoy className="h-4 w-4 mr-1" />
+                      Leg Bye
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    {renderRunsSelector('legBye')}
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </CardContent>

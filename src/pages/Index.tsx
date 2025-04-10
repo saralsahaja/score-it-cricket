@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -52,10 +51,9 @@ export default function Index() {
   const [firstInningsScore, setFirstInningsScore] = useState(0);
   const [isSecondInnings, setIsSecondInnings] = useState(false);
   
-  // Automatically start second innings when 10 wickets fall or 20 overs completed in first innings
   useEffect(() => {
     if (!isSecondInnings && (wickets >= 10 || totalBalls >= 120)) {
-      if (totalBalls > 0) { // Only if a match has started
+      if (totalBalls > 0) {
         toast.info("First innings complete! Starting second innings.", {
           duration: 5000,
         });
@@ -122,14 +120,11 @@ export default function Index() {
     
     const newBowler = { name: player, runs: 0, balls: 0, wickets: 0, maidens: 0 };
     
-    // Check if this bowler has bowled before
     const existingBowler = bowlersList.find(b => b.name === player);
     
     if (existingBowler) {
-      // Use existing stats
       setBowler(existingBowler);
     } else {
-      // Add new bowler to the list
       setBowler(newBowler);
       setBowlersList([...bowlersList, newBowler]);
     }
@@ -149,7 +144,6 @@ export default function Index() {
     if (!strikerStats) return;
     
     if (!extraType) {
-      // Normal runs
       strikerStats.runs += runs;
       strikerStats.balls += 1;
       
@@ -186,47 +180,38 @@ export default function Index() {
       }
     } 
     else {
-      let runsToAdd = runs;
       const bowlerStats = bowler;
       
-      if (extraType === 'wide' || extraType === 'noBall') {
-        // Wide and No Ball both add 1 extra run
-        runsToAdd = runs + 1;
-        bowlerStats.runs += runsToAdd;
-        
-        if (extraType === 'noBall') {
-          // No ball counts to batsman's score if they hit it
-          strikerStats.runs += runs;
-          strikerStats.balls += 1;
-          
-          if (runs === 4) {
-            strikerStats.fours += 1;
-          } else if (runs === 6) {
-            strikerStats.sixes += 1;
-          }
-        }
+      if (extraType === 'wide') {
+        bowlerStats.runs += 1;
+        setTotalRuns(totalRuns + 1);
+        toast.info("Wide ball: +1 run added");
+      } 
+      else if (extraType === 'noBall') {
+        bowlerStats.runs += 1;
+        setTotalRuns(totalRuns + 1);
+        toast.info("No ball: +1 run added");
       } 
       else if (extraType === 'legBye' || extraType === 'overThrow') {
-        // Leg byes don't count to batsman's runs but count for the team
-        // Overthrows do count to the team and are attributed to the batsman
         if (extraType === 'overThrow') {
-          strikerStats.runs += runsToAdd;
+          strikerStats.runs += runs;
+          toast.info(`Overthrow: ${runs} runs added`);
+        } else {
+          toast.info(`Leg bye: ${runs} runs added`);
         }
         
         strikerStats.balls += 1;
-        bowlerStats.runs += runsToAdd;
+        bowlerStats.runs += runs;
         bowlerStats.balls += 1;
-      }
-      
-      setBatsmen([...batsmen]);
-      
-      // Update bowler in the bowlers list
-      updateBowlerInList(bowlerStats);
-      
-      setTotalRuns(totalRuns + runsToAdd);
-      
-      if (extraType !== 'wide' && extraType !== 'noBall') {
+        
+        setTotalRuns(totalRuns + runs);
         setTotalBalls(totalBalls + 1);
+        
+        if (runs % 2 === 1) {
+          const temp = striker;
+          setStriker(nonStriker);
+          setNonStriker(temp);
+        }
         
         if (bowlerStats.balls % 6 === 0) {
           toast.info("End of over. Batsmen swapped positions.");
@@ -237,11 +222,10 @@ export default function Index() {
         }
       }
       
-      if ((extraType !== 'wide' && runs % 2 === 1) || (extraType === 'legBye' && runs % 2 === 1)) {
-        const temp = striker;
-        setStriker(nonStriker);
-        setNonStriker(temp);
-      }
+      setBatsmen([...batsmen]);
+      
+      // Update bowler in the bowlers list
+      updateBowlerInList(bowlerStats);
     }
   };
 
@@ -269,7 +253,6 @@ export default function Index() {
     setWickets(wickets + 1);
     setTotalBalls(totalBalls + 1);
     
-    // Update bowler in the bowlers list
     updateBowlerInList(bowlerStats);
     
     if (bowlerStats.balls % 6 === 0) {
@@ -304,7 +287,6 @@ export default function Index() {
     reader.readAsDataURL(file);
   };
 
-  // Calculate target and required stats
   const target = isSecondInnings ? firstInningsScore + 1 : 0;
   const crr = totalBalls > 0 ? (totalRuns / (totalBalls / 6)).toFixed(2) : "0.00";
   const ballsLeft = 120 - totalBalls;
