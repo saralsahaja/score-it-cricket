@@ -1,19 +1,21 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, UserCheck, Zap, Slash, Plus } from "lucide-react";
+import { User, UserCheck, Zap, Slash, Plus, AlertTriangle, Waves, ArrowUpRight } from "lucide-react";
 
 interface MatchControlProps {
   teamA: string[];
   teamB: string[];
   handleSelectBatsman: (player: string, isStriker: boolean) => void;
   handleSelectBowler: (player: string) => void;
-  handleAddRun: (runs: number) => void;
+  handleAddRun: (runs: number, extraType?: string) => void;
   handleWicket: () => void;
   striker: string | null;
   nonStriker: string | null;
   currentBowler: string | null;
+  isOverComplete: boolean;
 }
 
 export default function MatchControl({
@@ -25,7 +27,8 @@ export default function MatchControl({
   handleWicket,
   striker,
   nonStriker,
-  currentBowler
+  currentBowler,
+  isOverComplete
 }: MatchControlProps) {
   return (
     <Card className="shadow-lg border-2 border-primary/20">
@@ -99,6 +102,11 @@ export default function MatchControl({
                 <Badge variant="outline" className="bg-primary/10 text-primary">
                   {currentBowler || "Not Selected"}
                 </Badge>
+                {isOverComplete && (
+                  <div className="mt-2 p-1 bg-yellow-100/50 text-yellow-800 rounded-md text-xs">
+                    Over completed. Please select next bowler.
+                  </div>
+                )}
               </div>
               
               {teamB.length === 0 ? (
@@ -114,6 +122,8 @@ export default function MatchControl({
                         size="sm"
                         variant={currentBowler === p ? "default" : "outline"}
                         onClick={() => handleSelectBowler(p)}
+                        disabled={currentBowler === p && !isOverComplete}
+                        className={isOverComplete && currentBowler !== p ? "animate-pulse bg-yellow-500 hover:bg-yellow-600 text-white" : ""}
                       >
                         Select Bowler
                       </Button>
@@ -134,13 +144,16 @@ export default function MatchControl({
               <h3 className="font-bold text-lg">Run Entry</h3>
             </div>
             
-            <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+            <div className="grid grid-cols-4 md:grid-cols-7 gap-2 mb-4">
               {[0, 1, 2, 3, 4, 6].map((r) => (
                 <Button 
                   key={r} 
                   onClick={() => handleAddRun(r)}
                   variant={r === 4 || r === 6 ? "default" : "outline"}
-                  className={`text-lg font-bold ${r === 4 || r === 6 ? 'bg-accent text-accent-foreground hover:bg-accent/90' : ''}`}
+                  className={`text-lg font-bold ${
+                    r === 4 ? 'bg-blue-500 hover:bg-blue-600 text-white' : 
+                    r === 6 ? 'bg-purple-500 hover:bg-purple-600 text-white' : ''
+                  }`}
                 >
                   {r}
                 </Button>
@@ -153,6 +166,36 @@ export default function MatchControl({
                 <Slash className="h-4 w-4 mr-1" />
                 W
               </Button>
+            </div>
+            
+            <div className="mt-4">
+              <h4 className="text-sm font-medium mb-2">Extras</h4>
+              <div className="grid grid-cols-3 gap-2">
+                <Button 
+                  variant="outline" 
+                  className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
+                  onClick={() => handleAddRun(1, 'wide')}
+                >
+                  <Waves className="h-4 w-4 mr-1" />
+                  Wide
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
+                  onClick={() => handleAddRun(0, 'noBall')}
+                >
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  No Ball
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                  onClick={() => handleAddRun(1, 'overThrow')}
+                >
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                  Overthrow
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -3,7 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users } from "lucide-react";
+import { Users, Upload, Pencil } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
 
 interface TeamSetupProps {
   teamA: string[];
@@ -13,6 +15,13 @@ interface TeamSetupProps {
   activeTeam: string;
   setActiveTeam: (team: string) => void;
   handleAddPlayer: () => void;
+  teamAName: string;
+  setTeamAName: (name: string) => void;
+  teamBName: string;
+  setTeamBName: (name: string) => void;
+  teamALogo: string | null;
+  teamBLogo: string | null;
+  handleLogoUpload: (team: 'A' | 'B', e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function TeamSetup({
@@ -22,7 +31,14 @@ export default function TeamSetup({
   setPlayerName,
   activeTeam,
   setActiveTeam,
-  handleAddPlayer
+  handleAddPlayer,
+  teamAName,
+  setTeamAName,
+  teamBName,
+  setTeamBName,
+  teamALogo,
+  teamBLogo,
+  handleLogoUpload
 }: TeamSetupProps) {
   return (
     <Card className="shadow-lg border-2 border-primary/20">
@@ -53,24 +69,58 @@ export default function TeamSetup({
             variant={activeTeam === "A" ? "default" : "outline"}
             className="w-full"
           >
-            Team A {activeTeam === "A" && "(Active)"}
+            {teamAName} {activeTeam === "A" && "(Active)"}
           </Button>
           <Button 
             onClick={() => setActiveTeam("B")} 
             variant={activeTeam === "B" ? "default" : "outline"}
             className="w-full"
           >
-            Team B {activeTeam === "B" && "(Active)"}
+            {teamBName} {activeTeam === "B" && "(Active)"}
           </Button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardContent className="p-4">
-              <h3 className="font-bold text-lg flex items-center gap-2 mb-3">
-                <Badge variant="outline" className="py-1">A</Badge>
-                Team A <Badge>{teamA.length}</Badge>
-              </h3>
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="py-1">A</Badge>
+                  <div className="flex items-center">
+                    <Input 
+                      value={teamAName}
+                      onChange={(e) => setTeamAName(e.target.value)}
+                      className="font-bold text-lg border-0 focus-visible:ring-0 p-0 h-auto"
+                    />
+                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                  </div>
+                  <Badge>{teamA.length}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-12 w-12 border-2 border-primary/20">
+                    {teamALogo ? (
+                      <AvatarImage src={teamALogo} alt={teamAName} />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10 text-primary">{teamAName.charAt(0)}</AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div>
+                    <Label htmlFor="teamALogo" className="cursor-pointer">
+                      <div className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <Upload className="h-3 w-3" />
+                        Logo
+                      </div>
+                    </Label>
+                    <Input 
+                      id="teamALogo" 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => handleLogoUpload('A', e)}
+                    />
+                  </div>
+                </div>
+              </div>
               {teamA.length === 0 ? (
                 <div className="text-muted-foreground italic">No players added yet</div>
               ) : (
@@ -88,10 +138,44 @@ export default function TeamSetup({
           
           <Card>
             <CardContent className="p-4">
-              <h3 className="font-bold text-lg flex items-center gap-2 mb-3">
-                <Badge variant="outline" className="py-1">B</Badge>
-                Team B <Badge>{teamB.length}</Badge>
-              </h3>
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="py-1">B</Badge>
+                  <div className="flex items-center">
+                    <Input 
+                      value={teamBName}
+                      onChange={(e) => setTeamBName(e.target.value)}
+                      className="font-bold text-lg border-0 focus-visible:ring-0 p-0 h-auto"
+                    />
+                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                  </div>
+                  <Badge>{teamB.length}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-12 w-12 border-2 border-primary/20">
+                    {teamBLogo ? (
+                      <AvatarImage src={teamBLogo} alt={teamBName} />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10 text-primary">{teamBName.charAt(0)}</AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div>
+                    <Label htmlFor="teamBLogo" className="cursor-pointer">
+                      <div className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <Upload className="h-3 w-3" />
+                        Logo
+                      </div>
+                    </Label>
+                    <Input 
+                      id="teamBLogo" 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => handleLogoUpload('B', e)}
+                    />
+                  </div>
+                </div>
+              </div>
               {teamB.length === 0 ? (
                 <div className="text-muted-foreground italic">No players added yet</div>
               ) : (
