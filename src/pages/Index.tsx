@@ -1,14 +1,209 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import TeamSetup from "@/components/cricket/TeamSetup";
+import MatchControl from "@/components/cricket/MatchControl";
+import Scoreboard from "@/components/cricket/Scoreboard";
+import { CricketAppHeader } from "@/components/cricket/CricketAppHeader";
+
+export default function Index() {
+  const [teamA, setTeamA] = useState<string[]>([]);
+  const [teamB, setTeamB] = useState<string[]>([]);
+  const [playerName, setPlayerName] = useState("");
+  const [activeTeam, setActiveTeam] = useState("A");
+
+  const [batsmen, setBatsmen] = useState<Array<{name: string, runs: number, balls: number}>>([]);
+  const [bowler, setBowler] = useState<{name: string, runs: number, balls: number, wickets: number} | null>(null);
+  const [striker, setStriker] = useState<string | null>(null);
+  const [nonStriker, setNonStriker] = useState<string | null>(null);
+  const [currentBowler, setCurrentBowler] = useState<string | null>(null);
+
+  const [totalRuns, setTotalRuns] = useState(0);
+  const [totalBalls, setTotalBalls] = useState(0);
+  const [wickets, setWickets] = useState(0);
+  const [target, setTarget] = useState(150);
+
+  const handleAddPlayer = () => {
+    if (playerName.trim() === "") {
+      toast.error("Please enter a player name");
+      return;
+    }
+    
+    if (activeTeam === "A") {
+      if (teamA.includes(playerName)) {
+        toast.error("Player already exists in Team A");
+        return;
+      }
+      setTeamA([...teamA, playerName]);
+    } else {
+      if (teamB.includes(playerName)) {
+        toast.error("Player already exists in Team B");
+        return;
+      }
+      setTeamB([...teamB, playerName]);
+    }
+    
+    toast.success(`${playerName} added to Team ${activeTeam}`);
+    setPlayerName("");
+  };
+
+  const handleSelectBatsman = (player: string, isStriker: boolean) => {
+    if (!batsmen.find(b => b.name === player)) {
+      setBatsmen([...batsmen, { name: player, runs: 0, balls: 0 }]);
+    }
+    
+    if (isStriker) {
+      setStriker(player);
+      toast.success(`${player} is now the striker`);
+    } else {
+      setNonStriker(player);
+      toast.success(`${player} is now the non-striker`);
+    }
+  };
+
+  const handleSelectBowler = (player: string) => {
+    if (bowler?.name === player) return;
+    
+    if (bowler) {
+      const prev = bowler;
+      setBatsmen(b => b.map(x => x.name === prev.name ? prev : x));
+    }
+    
+    setBowler({ name: player, runs: 0, balls: 0, wickets: 0 });
+    setCurrentBowler(player);
+    toast.success(`${player} is now bowling`);
+  };
+
+  const handleAddRun = (runs: number) => {
+    if (!striker || !bowler) {
+      toast.error("Please select striker and bowler first");
+      return;
+    }
+
+    const strikerStats = batsmen.find(b => b.name === striker);
+    if (!strikerStats) return;
+    
+    strikerStats.runs += runs;
+    strikerStats.balls += 1;
+
+    const bowlerStats = bowler;
+    bowlerStats.runs += runs;
+    bowlerStats.balls += 1;
+
+    setBatsmen([...batsmen]);
+    setBowler({ ...bowlerStats });
+    setTotalRuns(totalRuns + runs);
+    setTotalBalls(totalBalls + 1);
+
+    // Swap striker if odd runs
+    if (runs % 2 === 1) {
+      const temp = striker;
+      setStriker(nonStriker);
+      setNonStriker(temp);
+    }
+
+    // Check for end of over (6 balls)
+    if (bowlerStats.balls % 6 === 0) {
+      toast.info("End of over. Batsmen swapped positions.");
+      const temp = striker;
+      setStriker(nonStriker);
+      setNonStriker(temp);
+    }
+  };
+
+  const handleWicket = () => {
+    if (!striker || !bowler) {
+      toast.error("Please select striker and bowler first");
+      return;
+    }
+
+    const bowlerStats = bowler;
+    bowlerStats.wickets += 1;
+    bowlerStats.balls += 1;
+    
+    // Update the batsman's stats
+    const strikerStats = batsmen.find(b => b.name === striker);
+    if (strikerStats) {
+      strikerStats.balls += 1;
+      setBatsmen([...batsmen]);
+    }
+    
+    setWickets(wickets + 1);
+    setTotalBalls(totalBalls + 1);
+    setBowler({ ...bowlerStats });
+    
+    toast.error(`${striker} is OUT!`);
+    setStriker(null);
+  };
+
+  const crr = totalBalls > 0 ? (totalRuns / (totalBalls / 6)).toFixed(2) : "0.00";
+  const ballsLeft = 120 - totalBalls;
+  const runsLeft = target - totalRuns;
+  const rrr = ballsLeft > 0 ? (runsLeft / (ballsLeft / 6)).toFixed(2) : "0.00";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-secondary/50">
+      <CricketAppHeader />
+      
+      <main className="container mx-auto py-6 px-4">
+        <Tabs defaultValue="setup" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="setup">Team Setup</TabsTrigger>
+            <TabsTrigger value="control">Match Control</TabsTrigger>
+            <TabsTrigger value="scoreboard">Scoreboard</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="setup">
+            <TeamSetup 
+              teamA={teamA}
+              teamB={teamB}
+              playerName={playerName}
+              setPlayerName={setPlayerName}
+              activeTeam={activeTeam}
+              setActiveTeam={setActiveTeam}
+              handleAddPlayer={handleAddPlayer}
+            />
+          </TabsContent>
+          
+          <TabsContent value="control">
+            <MatchControl 
+              teamA={teamA}
+              teamB={teamB}
+              handleSelectBatsman={handleSelectBatsman}
+              handleSelectBowler={handleSelectBowler}
+              handleAddRun={handleAddRun}
+              handleWicket={handleWicket}
+              striker={striker}
+              nonStriker={nonStriker}
+              currentBowler={currentBowler}
+            />
+          </TabsContent>
+          
+          <TabsContent value="scoreboard">
+            <Scoreboard 
+              totalRuns={totalRuns}
+              wickets={wickets}
+              totalBalls={totalBalls}
+              crr={crr}
+              target={target}
+              rrr={rrr}
+              runsLeft={runsLeft}
+              ballsLeft={ballsLeft}
+              batsmen={batsmen}
+              bowler={bowler}
+              striker={striker}
+              nonStriker={nonStriker}
+            />
+          </TabsContent>
+        </Tabs>
+      </main>
+      <Toaster position="top-center" />
     </div>
   );
-};
-
-export default Index;
+}
