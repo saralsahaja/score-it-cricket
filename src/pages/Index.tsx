@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -91,11 +90,6 @@ export default function Index() {
   const handleSelectBowler = (player: string) => {
     if (bowler?.name === player) return;
     
-    if (bowler) {
-      const prev = bowler;
-      setBatsmen(b => b.map(x => x.name === prev.name ? prev : x));
-    }
-    
     setBowler({ name: player, runs: 0, balls: 0, wickets: 0, maidens: 0 });
     setCurrentBowler(player);
     setIsOverComplete(false);
@@ -111,12 +105,10 @@ export default function Index() {
     const strikerStats = batsmen.find(b => b.name === striker);
     if (!strikerStats) return;
     
-    // Handle regular runs
     if (!extraType) {
       strikerStats.runs += runs;
       strikerStats.balls += 1;
       
-      // Count boundaries
       if (runs === 4) {
         strikerStats.fours += 1;
       } else if (runs === 6) {
@@ -132,14 +124,12 @@ export default function Index() {
       setTotalRuns(totalRuns + runs);
       setTotalBalls(totalBalls + 1);
 
-      // Swap striker if odd runs
       if (runs % 2 === 1) {
         const temp = striker;
         setStriker(nonStriker);
         setNonStriker(temp);
       }
 
-      // Check for end of over (6 legal deliveries)
       if (bowlerStats.balls % 6 === 0) {
         toast.info("End of over. Batsmen swapped positions.");
         setIsOverComplete(true);
@@ -148,16 +138,14 @@ export default function Index() {
         setNonStriker(temp);
       }
     } 
-    // Handle extras
     else {
       let runsToAdd = runs;
       const bowlerStats = bowler;
       
       if (extraType === 'wide' || extraType === 'noBall') {
-        runsToAdd = runs + 1; // Extra 1 run for wide/no-ball
+        runsToAdd = runs + 1;
         bowlerStats.runs += runsToAdd;
         
-        // No ball counts as a ball faced by batsman, but not in bowler's over count
         if (extraType === 'noBall') {
           strikerStats.runs += runs;
           strikerStats.balls += 1;
@@ -179,11 +167,9 @@ export default function Index() {
       setBowler({ ...bowlerStats });
       setTotalRuns(totalRuns + runsToAdd);
       
-      // Only increment totalBalls for balls that count toward the over
       if (extraType !== 'wide' && extraType !== 'noBall') {
         setTotalBalls(totalBalls + 1);
         
-        // Check for end of over
         if (bowlerStats.balls % 6 === 0) {
           toast.info("End of over. Batsmen swapped positions.");
           setIsOverComplete(true);
@@ -193,7 +179,6 @@ export default function Index() {
         }
       }
       
-      // Swap striker for odd runs (except wides)
       if (extraType !== 'wide' && runs % 2 === 1) {
         const temp = striker;
         setStriker(nonStriker);
@@ -212,7 +197,6 @@ export default function Index() {
     bowlerStats.wickets += 1;
     bowlerStats.balls += 1;
     
-    // Update the batsman's stats
     const strikerStats = batsmen.find(b => b.name === striker);
     if (strikerStats) {
       strikerStats.balls += 1;
@@ -223,7 +207,6 @@ export default function Index() {
     setTotalBalls(totalBalls + 1);
     setBowler({ ...bowlerStats });
     
-    // Check for end of over
     if (bowlerStats.balls % 6 === 0) {
       setIsOverComplete(true);
       const temp = striker;
@@ -235,7 +218,6 @@ export default function Index() {
     setStriker(null);
   };
 
-  // Handler for logo uploads
   const handleLogoUpload = (team: 'A' | 'B', e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
