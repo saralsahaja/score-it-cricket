@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, Award, Star, Trophy, Edit2 } from "lucide-react";
+import { LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, Award, Star, Trophy, Edit2, Pencil } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 
@@ -110,9 +110,9 @@ export default function Scoreboard({
   };
   
   return (
-    <Card className="shadow-lg border-4 border-primary/50 rounded-xl overflow-hidden">
+    <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden">
       <CardContent className="space-y-6 p-6">
-        <div className="flex items-center justify-center gap-2 mb-2">
+        <div className="flex items-center justify-center gap-2 mb-4">
           <LineChart className="h-7 w-7 text-primary" />
           {isEditingTitle ? (
             <div className="flex items-center gap-1">
@@ -136,16 +136,21 @@ export default function Scoreboard({
           )}
         </div>
         
-        <div className="bg-gradient-to-r from-blue-600/20 via-purple-500/20 to-blue-600/20 rounded-lg p-6 border-2 border-primary/30">
+        <div className="bg-gradient-to-r from-blue-100 via-purple-100 to-blue-100 rounded-lg p-6 border-2 border-primary">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <Avatar className="h-16 w-16 border-2 border-primary/20">
-                {teamALogo ? (
-                  <AvatarImage src={teamALogo} alt={teamAName} />
-                ) : (
-                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">{teamAName.charAt(0)}</AvatarFallback>
-                )}
-              </Avatar>
+              <div className="relative bg-blue-100 rounded-full p-2 border-2 border-blue-300 cursor-pointer group">
+                <Avatar className="h-16 w-16">
+                  {teamALogo ? (
+                    <AvatarImage src={teamALogo} alt={teamAName} />
+                  ) : (
+                    <AvatarFallback className="bg-blue-200 text-blue-800 font-bold text-2xl">{teamAName.charAt(0)}</AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Pencil className="h-6 w-6 text-white" />
+                </div>
+              </div>
               <div className="relative">
                 {isEditingTeamA ? (
                   <div className="flex items-center gap-1">
@@ -160,21 +165,21 @@ export default function Scoreboard({
                   </div>
                 ) : (
                   <div 
-                    className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-1"
+                    className="font-bold text-2xl text-blue-800 flex items-center gap-1 cursor-pointer"
                     onClick={() => setIsEditingTeamA(true)}
                   >
                     {teamAName}
-                    <Edit2 className="h-4 w-4 text-primary cursor-pointer" />
+                    <Edit2 className="h-4 w-4 text-blue-600" />
                   </div>
                 )}
               </div>
             </div>
             
             <div className="text-center">
-              <div className="text-5xl font-bold mb-1 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent border-2 border-primary/20 rounded-xl px-4 py-1">
+              <div className="text-6xl font-bold mb-1 bg-white text-indigo-700 border-3 border-indigo-300 rounded-xl px-6 py-2 shadow-md">
                 {totalRuns}/{wickets}
               </div>
-              <div className="text-md text-muted-foreground">
+              <div className="text-md text-indigo-700 font-semibold flex items-center justify-center">
                 <Clock className="inline-block h-5 w-5 mr-1" />
                 {oversText} overs
               </div>
@@ -195,32 +200,37 @@ export default function Scoreboard({
                   </div>
                 ) : (
                   <div 
-                    className="font-bold text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent flex items-center gap-1"
+                    className="font-bold text-2xl text-purple-800 flex items-center gap-1 cursor-pointer"
                     onClick={() => setIsEditingTeamB(true)}
                   >
                     {teamBName}
-                    <Edit2 className="h-4 w-4 text-primary cursor-pointer" />
+                    <Edit2 className="h-4 w-4 text-purple-600" />
                   </div>
                 )}
               </div>
-              <Avatar className="h-16 w-16 border-2 border-primary/20">
-                {teamBLogo ? (
-                  <AvatarImage src={teamBLogo} alt={teamBName} />
-                ) : (
-                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">{teamBName.charAt(0)}</AvatarFallback>
-                )}
-              </Avatar>
+              <div className="relative bg-purple-100 rounded-full p-2 border-2 border-purple-300 cursor-pointer group">
+                <Avatar className="h-16 w-16">
+                  {teamBLogo ? (
+                    <AvatarImage src={teamBLogo} alt={teamBName} />
+                  ) : (
+                    <AvatarFallback className="bg-purple-200 text-purple-800 font-bold text-2xl">{teamBName.charAt(0)}</AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Pencil className="h-6 w-6 text-white" />
+                </div>
+              </div>
             </div>
           </div>
           
           {recentBalls.length > 0 && (
-            <div className="mb-4 bg-white/80 backdrop-blur-sm rounded-lg p-3 shadow-md border-2 border-primary/20">
-              <div className="text-sm text-muted-foreground mb-2 font-semibold">Ball by Ball</div>
+            <div className="mb-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-md border-2 border-primary/20">
+              <div className="text-sm text-indigo-700 mb-2 font-semibold">Ball by Ball</div>
               <div className="flex items-center gap-1 overflow-x-auto py-1 px-1">
                 {recentBalls.map((ball, index) => (
                   <div 
                     key={index} 
-                    className={`flex-shrink-0 w-8 h-8 rounded-full ${getBallColor(ball)} flex items-center justify-center text-white font-bold shadow-md border border-white`}
+                    className={`flex-shrink-0 w-8 h-8 rounded-full ${getBallColor(ball)} flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
                   >
                     {ball}
                   </div>
@@ -230,35 +240,35 @@ export default function Scoreboard({
           )}
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-            <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-blue-300">
-              <div className="text-sm text-muted-foreground mb-1 font-semibold">Current RR</div>
-              <div className="text-xl font-bold flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 mr-1 text-primary" />
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-blue-300">
+              <div className="text-sm text-blue-700 mb-1 font-semibold">Current RR</div>
+              <div className="text-2xl font-bold flex items-center justify-center text-blue-700">
+                <TrendingUp className="h-5 w-5 mr-1 text-blue-500" />
                 {crr}
               </div>
             </div>
             
             {isSecondInnings && (
               <>
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-green-300">
-                  <div className="text-sm text-muted-foreground mb-1 font-semibold">Target</div>
-                  <div className="text-xl font-bold flex items-center justify-center">
-                    <Target className="h-5 w-5 mr-1 text-accent" />
+                <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-green-300">
+                  <div className="text-sm text-green-700 mb-1 font-semibold">Target</div>
+                  <div className="text-2xl font-bold flex items-center justify-center text-green-700">
+                    <Target className="h-5 w-5 mr-1 text-green-500" />
                     {target}
                   </div>
                 </div>
                 
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-red-300">
-                  <div className="text-sm text-muted-foreground mb-1 font-semibold">Req. RR</div>
-                  <div className="text-xl font-bold flex items-center justify-center">
-                    <TrendingUp className="h-5 w-5 mr-1 text-destructive" />
+                <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-red-300">
+                  <div className="text-sm text-red-700 mb-1 font-semibold">Req. RR</div>
+                  <div className="text-2xl font-bold flex items-center justify-center text-red-700">
+                    <TrendingUp className="h-5 w-5 mr-1 text-red-500" />
                     {rrr}
                   </div>
                 </div>
                 
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-purple-300">
-                  <div className="text-sm text-muted-foreground mb-1 font-semibold">To Win</div>
-                  <div className="text-xl font-bold">
+                <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-purple-300">
+                  <div className="text-sm text-purple-700 mb-1 font-semibold">To Win</div>
+                  <div className="text-2xl font-bold text-purple-700">
                     {runsLeft} off {ballsLeft}
                   </div>
                 </div>
@@ -267,9 +277,9 @@ export default function Scoreboard({
             
             {!isSecondInnings && (
               <>
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 text-center shadow-md col-span-3 border-2 border-amber-300">
-                  <div className="text-sm text-muted-foreground mb-1 font-semibold">First Innings</div>
-                  <div className="text-xl font-bold">
+                <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md col-span-3 border-2 border-amber-300">
+                  <div className="text-sm text-amber-700 mb-1 font-semibold">First Innings</div>
+                  <div className="text-2xl font-bold text-amber-700">
                     Setting a target for {teamBName}
                   </div>
                 </div>
@@ -285,17 +295,17 @@ export default function Scoreboard({
             <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-3">
               <div className="flex items-center gap-2">
                 <Users className="h-6 w-6" />
-                <h3 className="font-bold text-xl">Batsmen</h3>
+                <h3 className="font-bold text-2xl">Batsmen</h3>
               </div>
             </div>
-            <CardContent className="p-4 border-2 border-blue-300">
+            <CardContent className="p-4 border-3 border-blue-300">
               {batsmen.length === 0 ? (
-                <div className="text-muted-foreground italic text-center p-4">
+                <div className="text-muted-foreground italic text-center p-4 text-lg">
                   No batsmen selected yet
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="grid grid-cols-12 text-sm text-muted-foreground px-2 font-semibold">
+                  <div className="grid grid-cols-12 text-sm text-blue-700 px-2 font-semibold">
                     <div className="col-span-4">Batsman</div>
                     <div className="col-span-2 text-center">R</div>
                     <div className="col-span-2 text-center">B</div>
@@ -320,13 +330,13 @@ export default function Scoreboard({
                             : 'border border-border'
                         } ${b === topScorer && b.runs > 0 ? 'ring-2 ring-amber-400' : ''}`}
                       >
-                        <div className="col-span-4 font-medium flex items-center text-lg">
+                        <div className="col-span-4 font-medium flex items-center text-xl">
                           {b.name} 
                           {isStriker && <Badge className="ml-1 bg-blue-500 text-white">*</Badge>}
                           {b === topScorer && b.runs > 0 && <Star className="h-4 w-4 ml-1 fill-amber-400 text-amber-400" />}
                         </div>
-                        <div className="col-span-2 text-center font-bold text-lg">{b.runs}</div>
-                        <div className="col-span-2 text-center text-lg">{b.balls}</div>
+                        <div className="col-span-2 text-center font-bold text-xl">{b.runs}</div>
+                        <div className="col-span-2 text-center text-xl">{b.balls}</div>
                         <div className="col-span-2 text-center">{strikeRate}</div>
                         <div className="col-span-1 text-center">
                           <Badge variant="outline" className="bg-blue-100 text-base">{b.fours}</Badge>
@@ -346,17 +356,17 @@ export default function Scoreboard({
             <div className="bg-gradient-to-r from-green-600 to-green-800 text-white p-3">
               <div className="flex items-center gap-2">
                 <Zap className="h-6 w-6" />
-                <h3 className="font-bold text-xl">Bowlers</h3>
+                <h3 className="font-bold text-2xl">Bowlers</h3>
               </div>
             </div>
-            <CardContent className="p-4 border-2 border-green-300">
+            <CardContent className="p-4 border-3 border-green-300">
               {bowlersList.length === 0 ? (
-                <div className="text-muted-foreground italic text-center p-4">
+                <div className="text-muted-foreground italic text-center p-4 text-lg">
                   No bowlers yet
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-10 text-sm text-muted-foreground px-2 font-semibold">
+                  <div className="grid grid-cols-10 text-sm text-green-700 px-2 font-semibold">
                     <div className="col-span-3">Bowler</div>
                     <div className="col-span-2 text-center">O</div>
                     <div className="col-span-1 text-center">M</div>
@@ -380,16 +390,16 @@ export default function Scoreboard({
                               : 'border border-border'
                           } ${isBestBowler ? 'ring-2 ring-emerald-400' : ''}`}
                         >
-                          <div className="col-span-3 font-medium flex items-center text-lg">
+                          <div className="col-span-3 font-medium flex items-center text-xl">
                             {b.name}
                             {isBestBowler && <Trophy className="h-4 w-4 ml-1 fill-emerald-400 text-emerald-400" />}
                           </div>
-                          <div className="col-span-2 text-center text-lg">
+                          <div className="col-span-2 text-center text-xl">
                             {Math.floor(b.balls/6)}.{b.balls%6}
                           </div>
-                          <div className="col-span-1 text-center text-lg">{b.maidens}</div>
-                          <div className="col-span-1 text-center text-lg">{b.runs}</div>
-                          <div className="col-span-1 text-center font-bold text-lg">{b.wickets}</div>
+                          <div className="col-span-1 text-center text-xl">{b.maidens}</div>
+                          <div className="col-span-1 text-center text-xl">{b.runs}</div>
+                          <div className="col-span-1 text-center font-bold text-xl">{b.wickets}</div>
                           <div className="col-span-2 text-center">
                             {economy}
                           </div>
