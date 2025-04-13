@@ -50,7 +50,8 @@ export default function Index() {
   const [wickets, setWickets] = useState(0);
   const [firstInningsScore, setFirstInningsScore] = useState(0);
   const [isSecondInnings, setIsSecondInnings] = useState(false);
-  
+  const [recentBalls, setRecentBalls] = useState<string[]>([]);
+
   useEffect(() => {
     if (!isSecondInnings && (wickets >= 10 || totalBalls >= 120)) {
       if (totalBalls > 0) {
@@ -60,6 +61,7 @@ export default function Index() {
         setFirstInningsScore(totalRuns);
         setIsSecondInnings(true);
         resetInnings();
+        setRecentBalls([]);
       }
     }
   }, [wickets, totalBalls, isSecondInnings]);
@@ -165,6 +167,10 @@ export default function Index() {
       setTotalRuns(totalRuns + runs);
       setTotalBalls(totalBalls + 1);
 
+      // Add to recent balls
+      const ballNotation = runs === 0 ? '0' : runs.toString();
+      setRecentBalls(prev => [...prev.slice(-11), ballNotation]);
+
       if (runs % 2 === 1) {
         const temp = striker;
         setStriker(nonStriker);
@@ -185,18 +191,22 @@ export default function Index() {
       if (extraType === 'wide') {
         bowlerStats.runs += 1;
         setTotalRuns(totalRuns + 1);
+        setRecentBalls(prev => [...prev.slice(-11), 'WD']);
         toast.info("Wide ball: +1 run added");
       } 
       else if (extraType === 'noBall') {
         bowlerStats.runs += 1;
         setTotalRuns(totalRuns + 1);
+        setRecentBalls(prev => [...prev.slice(-11), 'NB']);
         toast.info("No ball: +1 run added");
       } 
       else if (extraType === 'legBye' || extraType === 'overThrow') {
         if (extraType === 'overThrow') {
           strikerStats.runs += runs;
+          setRecentBalls(prev => [...prev.slice(-11), 'OT']);
           toast.info(`Overthrow: ${runs} runs added`);
         } else {
+          setRecentBalls(prev => [...prev.slice(-11), 'LB']);
           toast.info(`Leg bye: ${runs} runs added`);
         }
         
@@ -252,6 +262,9 @@ export default function Index() {
     
     setWickets(wickets + 1);
     setTotalBalls(totalBalls + 1);
+    
+    // Add to recent balls
+    setRecentBalls(prev => [...prev.slice(-11), 'W']);
     
     updateBowlerInList(bowlerStats);
     
@@ -360,6 +373,9 @@ export default function Index() {
               teamBLogo={teamBLogo}
               isSecondInnings={isSecondInnings}
               bowlersList={bowlersList}
+              recentBalls={recentBalls}
+              setTeamAName={setTeamAName}
+              setTeamBName={setTeamBName}
             />
           </TabsContent>
         </Tabs>
