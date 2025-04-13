@@ -29,6 +29,7 @@ interface ScorecardProps {
   recentBalls: string[];
   setTeamAName: (name: string) => void;
   setTeamBName: (name: string) => void;
+  totalOvers: number;
 }
 
 export default function Scoreboard({
@@ -52,7 +53,8 @@ export default function Scoreboard({
   bowlersList,
   recentBalls,
   setTeamAName,
-  setTeamBName
+  setTeamBName,
+  totalOvers
 }: ScorecardProps) {
   const [isEditingTeamA, setIsEditingTeamA] = useState(false);
   const [isEditingTeamB, setIsEditingTeamB] = useState(false);
@@ -64,6 +66,11 @@ export default function Scoreboard({
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
   const oversText = `${overs}.${balls}`;
+  const matchFormat = totalOvers === 20 ? 'T20' : 
+                      totalOvers === 50 ? 'ODI' : 
+                      totalOvers === 10 ? 'T10' : 
+                      totalOvers === 90 ? 'Test' : 
+                      `${totalOvers} overs`;
   
   // Find top scorer
   const topScorer = batsmen.length > 0 
@@ -181,7 +188,10 @@ export default function Scoreboard({
               </div>
               <div className="text-md text-indigo-700 font-semibold flex items-center justify-center">
                 <Clock className="inline-block h-5 w-5 mr-1" />
-                {oversText} overs
+                {oversText}/{totalOvers} overs
+              </div>
+              <div className="text-xs font-medium text-indigo-600 mt-1">
+                {matchFormat} match
               </div>
             </div>
             

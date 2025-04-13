@@ -36,6 +36,7 @@ export default function Index() {
   const [teamBName, setTeamBName] = useState("Team B");
   const [teamALogo, setTeamALogo] = useState<string | null>(null);
   const [teamBLogo, setTeamBLogo] = useState<string | null>(null);
+  const [totalOvers, setTotalOvers] = useState(20);
 
   const [batsmen, setBatsmen] = useState<BatsmanStats[]>([]);
   const [bowler, setBowler] = useState<BowlerStats | null>(null);
@@ -53,7 +54,9 @@ export default function Index() {
   const [recentBalls, setRecentBalls] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!isSecondInnings && (wickets >= 10 || totalBalls >= 120)) {
+    const maxBalls = totalOvers * 6;
+    
+    if (!isSecondInnings && (wickets >= 10 || totalBalls >= maxBalls)) {
       if (totalBalls > 0) {
         toast.info("First innings complete! Starting second innings.", {
           duration: 5000,
@@ -64,7 +67,7 @@ export default function Index() {
         setRecentBalls([]);
       }
     }
-  }, [wickets, totalBalls, isSecondInnings]);
+  }, [wickets, totalBalls, isSecondInnings, totalOvers]);
 
   const resetInnings = () => {
     setTotalRuns(0);
@@ -300,9 +303,18 @@ export default function Index() {
     reader.readAsDataURL(file);
   };
 
+  const handleTotalOversChange = (overs: number) => {
+    if (overs > 0 && overs <= 50) {
+      setTotalOvers(overs);
+      toast.success(`Match format updated to ${overs} overs`);
+    } else {
+      toast.error("Please enter a valid number of overs (1-50)");
+    }
+  };
+
   const target = isSecondInnings ? firstInningsScore + 1 : 0;
   const crr = totalBalls > 0 ? (totalRuns / (totalBalls / 6)).toFixed(2) : "0.00";
-  const ballsLeft = 120 - totalBalls;
+  const ballsLeft = totalOvers * 6 - totalBalls;
   const runsLeft = isSecondInnings ? target - totalRuns : 0;
   const rrr = ballsLeft > 0 && isSecondInnings ? (runsLeft / (ballsLeft / 6)).toFixed(2) : "0.00";
 
@@ -334,6 +346,8 @@ export default function Index() {
               teamALogo={teamALogo}
               teamBLogo={teamBLogo}
               handleLogoUpload={handleLogoUpload}
+              totalOvers={totalOvers}
+              handleTotalOversChange={handleTotalOversChange}
             />
           </TabsContent>
           
@@ -350,6 +364,8 @@ export default function Index() {
               currentBowler={currentBowler}
               isOverComplete={isOverComplete}
               wickets={wickets}
+              totalOvers={totalOvers}
+              totalBalls={totalBalls}
             />
           </TabsContent>
           
@@ -376,6 +392,7 @@ export default function Index() {
               recentBalls={recentBalls}
               setTeamAName={setTeamAName}
               setTeamBName={setTeamBName}
+              totalOvers={totalOvers}
             />
           </TabsContent>
         </Tabs>

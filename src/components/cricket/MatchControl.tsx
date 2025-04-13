@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, UserCheck, Zap, Slash, Plus, AlertTriangle, Waves, ArrowUpRight, LifeBuoy } from "lucide-react";
+import { User, UserCheck, Zap, Slash, Plus, AlertTriangle, Waves, ArrowUpRight, LifeBuoy, Clock } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,6 +21,8 @@ interface MatchControlProps {
   currentBowler: string | null;
   isOverComplete: boolean;
   wickets: number;
+  totalOvers: number;
+  totalBalls: number;
 }
 
 export default function MatchControl({
@@ -34,7 +36,9 @@ export default function MatchControl({
   nonStriker,
   currentBowler,
   isOverComplete,
-  wickets
+  wickets,
+  totalOvers,
+  totalBalls
 }: MatchControlProps) {
   const [extraRunsValue, setExtraRunsValue] = useState<number>(1);
   const [showRunsPopover, setShowRunsPopover] = useState<string | null>(null);
@@ -43,6 +47,15 @@ export default function MatchControl({
     handleAddRun(runs, extraType);
     setShowRunsPopover(null);
   };
+
+  // Calculate current over and remaining overs
+  const currentOver = Math.floor(totalBalls / 6) + 1;
+  const remainingOvers = totalOvers - Math.floor(totalBalls / 6);
+  const remainingBalls = 6 - (totalBalls % 6);
+  const oversDisplay = `${currentOver}/${totalOvers}`;
+  const remainingDisplay = remainingBalls === 6 
+    ? `${remainingOvers} overs left` 
+    : `${remainingOvers - 1}.${remainingBalls} overs left`;
 
   const renderRunsSelector = (extraType: string) => {
     return (
@@ -94,14 +107,25 @@ export default function MatchControl({
                 </div>
               </div>
               
-              <div className="p-2 bg-yellow-100 rounded-md text-center my-3">
-                <p className="text-sm font-bold text-yellow-800">
-                  {wickets >= 10 ? (
-                    "All Out! Innings Complete."
-                  ) : (
-                    `Wickets: ${wickets}/10`
-                  )}
-                </p>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="p-2 bg-yellow-100 rounded-md text-center">
+                  <p className="text-sm font-bold text-yellow-800">
+                    {wickets >= 10 ? (
+                      "All Out! Innings Complete."
+                    ) : (
+                      `Wickets: ${wickets}/10`
+                    )}
+                  </p>
+                </div>
+                <div className="p-2 bg-blue-100 rounded-md text-center">
+                  <p className="text-sm font-bold text-blue-800 flex items-center justify-center">
+                    <Clock className="h-4 w-4 mr-1" />
+                    {oversDisplay} overs
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    {remainingDisplay}
+                  </p>
+                </div>
               </div>
               
               {teamA.length === 0 ? (
