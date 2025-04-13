@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -72,12 +71,10 @@ export default function Scoreboard({
                       totalOvers === 90 ? 'Test' : 
                       `${totalOvers} overs`;
   
-  // Find top scorer
   const topScorer = batsmen.length > 0 
     ? batsmen.reduce((prev, current) => (prev.runs > current.runs) ? prev : current) 
     : null;
   
-  // Find most economical bowler (minimum 1 over bowled)
   const economicalBowlers = bowlersList.filter(b => b.balls >= 6);
   const bestBowler = economicalBowlers.length > 0 
     ? economicalBowlers.reduce((prev, current) => 
