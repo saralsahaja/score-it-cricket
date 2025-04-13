@@ -58,6 +58,8 @@ export default function Scoreboard({
   const [isEditingTeamB, setIsEditingTeamB] = useState(false);
   const [tempTeamAName, setTempTeamAName] = useState(teamAName);
   const [tempTeamBName, setTempTeamBName] = useState(teamBName);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [scoreboardTitle, setScoreboardTitle] = useState("Live Scoreboard");
 
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
@@ -88,6 +90,10 @@ export default function Scoreboard({
     setIsEditingTeamB(false);
   };
 
+  const handleTitleSave = () => {
+    setIsEditingTitle(false);
+  };
+
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
     if (ball === '0') return 'bg-gray-300';
@@ -108,9 +114,26 @@ export default function Scoreboard({
       <CardContent className="space-y-6 p-6">
         <div className="flex items-center justify-center gap-2 mb-2">
           <LineChart className="h-7 w-7 text-primary" />
-          <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Live Scoreboard
-          </h2>
+          {isEditingTitle ? (
+            <div className="flex items-center gap-1">
+              <Input 
+                value={scoreboardTitle}
+                onChange={(e) => setScoreboardTitle(e.target.value)}
+                className="text-2xl font-bold text-center border-2 border-primary w-64"
+                autoFocus
+                onBlur={handleTitleSave}
+                onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
+              />
+            </div>
+          ) : (
+            <h2 
+              className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-1 cursor-pointer"
+              onClick={() => setIsEditingTitle(true)}
+            >
+              {scoreboardTitle}
+              <Edit2 className="h-5 w-5 text-primary" />
+            </h2>
+          )}
         </div>
         
         <div className="bg-gradient-to-r from-blue-600/20 via-purple-500/20 to-blue-600/20 rounded-lg p-6 border-2 border-primary/30">
