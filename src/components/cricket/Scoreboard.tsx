@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -89,12 +88,10 @@ export default function Scoreboard({
       )
     : null;
 
-  // Get active batsmen
   const activeBatsman1 = batsmen.find(b => b.name === striker);
   const activeBatsman2 = batsmen.find(b => b.name === nonStriker);
   const activeBatsmen = [activeBatsman1, activeBatsman2].filter(Boolean);
 
-  // Handle wicket popup
   useEffect(() => {
     if (lastWicketType && outPlayers.length > 0) {
       const lastOut = outPlayers[outPlayers.length - 1];
@@ -115,7 +112,7 @@ export default function Scoreboard({
         return () => clearTimeout(timer);
       }
     }
-  }, [lastWicketType, outPlayers.length]);
+  }, [outPlayers, lastWicketType]);
 
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
