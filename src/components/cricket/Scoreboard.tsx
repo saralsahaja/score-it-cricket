@@ -1,12 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, Award, Star, Trophy } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 interface ScorecardProps {
@@ -67,6 +65,7 @@ export default function Scoreboard({
   lastWicketType
 }: ScorecardProps) {
   const [showWicketPopup, setShowWicketPopup] = useState(false);
+  const [lastOutBatsman, setLastOutBatsman] = useState<{name: string, runs: number, balls: number} | null>(null);
   
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
@@ -96,15 +95,27 @@ export default function Scoreboard({
   const activeBatsmen = [activeBatsman1, activeBatsman2].filter(Boolean);
 
   // Handle wicket popup
-  useState(() => {
-    if (lastWicketType && wickets > 0) {
-      setShowWicketPopup(true);
-      const timer = setTimeout(() => {
-        setShowWicketPopup(false);
-      }, 3000);
-      return () => clearTimeout(timer);
+  useEffect(() => {
+    if (lastWicketType && outPlayers.length > 0) {
+      const lastOut = outPlayers[outPlayers.length - 1];
+      const lastOutStats = batsmen.find(b => b.name === lastOut);
+      
+      if (lastOutStats) {
+        setLastOutBatsman({
+          name: lastOutStats.name,
+          runs: lastOutStats.runs,
+          balls: lastOutStats.balls
+        });
+        setShowWicketPopup(true);
+        
+        const timer = setTimeout(() => {
+          setShowWicketPopup(false);
+        }, 3000);
+        
+        return () => clearTimeout(timer);
+      }
     }
-  });
+  }, [lastWicketType, outPlayers.length]);
 
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
@@ -123,12 +134,13 @@ export default function Scoreboard({
   
   return (
     <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden">
-      {showWicketPopup && lastWicketType && (
+      {showWicketPopup && lastWicketType && lastOutBatsman && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
           <div className="bg-red-100 rounded-xl p-6 shadow-lg border-4 border-red-500 max-w-md transform animate-bounce">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-red-700 mb-2">WICKET!</h2>
-              <p className="text-xl font-semibold">Dismissal Type: {lastWicketType}</p>
+              <p className="text-xl font-semibold">{lastOutBatsman.name} {lastOutBatsman.runs}({lastOutBatsman.balls})</p>
+              <p className="text-lg mt-1">Dismissal: {lastWicketType}</p>
             </div>
           </div>
         </div>
