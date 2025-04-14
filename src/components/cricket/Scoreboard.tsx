@@ -6,6 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, Award, Star, Trophy } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface ScorecardProps {
   totalRuns: number;
@@ -33,6 +35,7 @@ interface ScorecardProps {
   gameTitle: string;
   outPlayers: string[];
   retiredHurtPlayers: string[];
+  lastWicketType?: string;
 }
 
 export default function Scoreboard({
@@ -60,8 +63,11 @@ export default function Scoreboard({
   totalOvers,
   gameTitle,
   outPlayers,
-  retiredHurtPlayers
+  retiredHurtPlayers,
+  lastWicketType
 }: ScorecardProps) {
+  const [showWicketPopup, setShowWicketPopup] = useState(false);
+  
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
   const oversText = `${overs}.${balls}`;
@@ -84,6 +90,22 @@ export default function Scoreboard({
       )
     : null;
 
+  // Get active batsmen
+  const activeBatsman1 = batsmen.find(b => b.name === striker);
+  const activeBatsman2 = batsmen.find(b => b.name === nonStriker);
+  const activeBatsmen = [activeBatsman1, activeBatsman2].filter(Boolean);
+
+  // Handle wicket popup
+  useState(() => {
+    if (lastWicketType && wickets > 0) {
+      setShowWicketPopup(true);
+      const timer = setTimeout(() => {
+        setShowWicketPopup(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  });
+
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
     if (ball === '0') return 'bg-gray-300';
@@ -101,6 +123,17 @@ export default function Scoreboard({
   
   return (
     <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden">
+      {showWicketPopup && lastWicketType && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+          <div className="bg-red-100 rounded-xl p-6 shadow-lg border-4 border-red-500 max-w-md transform animate-bounce">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-red-700 mb-2">WICKET!</h2>
+              <p className="text-xl font-semibold">Dismissal Type: {lastWicketType}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <CardContent className="space-y-6 p-6">
         <div className="flex items-center justify-center gap-2 mb-4">
           <LineChart className="h-7 w-7 text-primary" />
@@ -224,14 +257,17 @@ export default function Scoreboard({
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="overflow-hidden border-none shadow-lg">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-3">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-3 flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Users className="h-6 w-6" />
-                <h3 className="font-bold text-2xl">Batsmen</h3>
+                <h3 className="font-bold text-2xl">Current Batsmen</h3>
               </div>
+              <Link to="/match-records" className="text-white hover:underline bg-blue-700 px-3 py-1 rounded-lg text-sm">
+                View All Records
+              </Link>
             </div>
             <CardContent className="p-4 border-3 border-blue-300">
-              {batsmen.length === 0 ? (
+              {activeBatsmen.length === 0 ? (
                 <div className="text-muted-foreground italic text-center p-4 text-lg">
                   No batsmen selected yet
                 </div>
@@ -246,34 +282,23 @@ export default function Scoreboard({
                     <div className="col-span-1 text-center">6s</div>
                   </div>
                   
-                  {batsmen.map((b, i) => {
-                    const isActive = b.name === striker || b.name === nonStriker;
+                  {activeBatsmen.map((b, i) => {
+                    if (!b) return null;
                     const isStriker = b.name === striker;
-                    const isOut = outPlayers.includes(b.name);
-                    const isRetiredHurt = retiredHurtPlayers.includes(b.name);
                     const strikeRate = b.balls > 0 ? ((b.runs / b.balls) * 100).toFixed(1) : "0.0";
                     
                     return (
                       <div 
                         key={i} 
                         className={`grid grid-cols-12 p-2 rounded-md ${
-                          isOut 
-                            ? 'bg-red-50 border-2 border-red-300' 
-                            : isRetiredHurt
-                              ? 'bg-yellow-50 border-2 border-yellow-300'
-                              : isActive 
-                                ? isStriker 
-                                  ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300' 
-                                  : 'bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300'
-                                : 'border border-border'
-                        } ${b === topScorer && b.runs > 0 ? 'ring-2 ring-amber-400' : ''}`}
+                          isStriker 
+                            ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300' 
+                            : 'bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300'
+                        }`}
                       >
                         <div className="col-span-4 font-medium flex items-center text-xl">
                           {b.name} 
                           {isStriker && <Badge className="ml-1 bg-blue-500 text-white">*</Badge>}
-                          {isOut && <Badge className="ml-1 bg-red-500 text-white">OUT</Badge>}
-                          {isRetiredHurt && <Badge className="ml-1 bg-yellow-500 text-white">HURT</Badge>}
-                          {b === topScorer && b.runs > 0 && <Star className="h-4 w-4 ml-1 fill-amber-400 text-amber-400" />}
                         </div>
                         <div className="col-span-2 text-center font-bold text-xl">{b.runs}</div>
                         <div className="col-span-2 text-center text-xl">{b.balls}</div>
@@ -293,16 +318,19 @@ export default function Scoreboard({
           </Card>
           
           <Card className="overflow-hidden border-none shadow-lg">
-            <div className="bg-gradient-to-r from-green-600 to-green-800 text-white p-3">
+            <div className="bg-gradient-to-r from-green-600 to-green-800 text-white p-3 flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Zap className="h-6 w-6" />
-                <h3 className="font-bold text-2xl">Bowlers</h3>
+                <h3 className="font-bold text-2xl">Current Bowler</h3>
               </div>
+              <Link to="/match-records" className="text-white hover:underline bg-green-700 px-3 py-1 rounded-lg text-sm">
+                View All Records
+              </Link>
             </div>
             <CardContent className="p-4 border-3 border-green-300">
-              {bowlersList.length === 0 ? (
+              {!bowler ? (
                 <div className="text-muted-foreground italic text-center p-4 text-lg">
-                  No bowlers yet
+                  No bowler selected yet
                 </div>
               ) : (
                 <>
@@ -315,37 +343,27 @@ export default function Scoreboard({
                     <div className="col-span-2 text-center">Econ</div>
                   </div>
                   
-                  <div className="space-y-2 mt-2 max-h-[160px] overflow-y-auto pr-1">
-                    {bowlersList.map((b, idx) => {
-                      const economy = b.balls > 0 ? ((b.runs / (b.balls/6)) || 0).toFixed(1) : "0.0";
-                      const isCurrentBowler = bowler?.name === b.name;
-                      const isBestBowler = bestBowler && b.name === bestBowler.name && b.balls >= 6;
+                  <div className="space-y-2 mt-2">
+                    {(() => {
+                      const economy = bowler.balls > 0 ? ((bowler.runs / (bowler.balls/6)) || 0).toFixed(1) : "0.0";
                       
                       return (
-                        <div 
-                          key={idx} 
-                          className={`grid grid-cols-10 p-2 rounded-md ${
-                            isCurrentBowler
-                              ? 'bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300' 
-                              : 'border border-border'
-                          } ${isBestBowler ? 'ring-2 ring-emerald-400' : ''}`}
-                        >
+                        <div className="grid grid-cols-10 p-2 rounded-md bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300">
                           <div className="col-span-3 font-medium flex items-center text-xl">
-                            {b.name}
-                            {isBestBowler && <Trophy className="h-4 w-4 ml-1 fill-emerald-400 text-emerald-400" />}
+                            {bowler.name}
                           </div>
                           <div className="col-span-2 text-center text-xl">
-                            {Math.floor(b.balls/6)}.{b.balls%6}
+                            {Math.floor(bowler.balls/6)}.{bowler.balls%6}
                           </div>
-                          <div className="col-span-1 text-center text-xl">{b.maidens}</div>
-                          <div className="col-span-1 text-center text-xl">{b.runs}</div>
-                          <div className="col-span-1 text-center font-bold text-xl">{b.wickets}</div>
+                          <div className="col-span-1 text-center text-xl">{bowler.maidens}</div>
+                          <div className="col-span-1 text-center text-xl">{bowler.runs}</div>
+                          <div className="col-span-1 text-center font-bold text-xl">{bowler.wickets}</div>
                           <div className="col-span-2 text-center">
                             {economy}
                           </div>
                         </div>
                       );
-                    })}
+                    })()}
                   </div>
                 </>
               )}

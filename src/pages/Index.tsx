@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -114,7 +113,6 @@ export default function Index() {
   };
 
   const handleSelectBatsman = (player: string, isStriker: boolean) => {
-    // Don't allow selecting out players
     if (outPlayers.includes(player)) {
       toast.error(`${player} is out and cannot bat again`);
       return;
@@ -155,10 +153,8 @@ export default function Index() {
   const handleRetireHurt = (player: string) => {
     if (!player) return;
     
-    // Add player to retired hurt list
     setRetiredHurtPlayers(prev => [...prev, player]);
     
-    // Remove from active batters
     if (player === striker) {
       setStriker(null);
       toast.info(`${player} has retired hurt. Please select a new striker.`);
@@ -193,13 +189,11 @@ export default function Index() {
 
       setBatsmen([...batsmen]);
       
-      // Update bowler in the bowlers list
       updateBowlerInList(bowlerStats);
       
       setTotalRuns(totalRuns + runs);
       setTotalBalls(totalBalls + 1);
 
-      // Add to recent balls
       const ballNotation = runs === 0 ? '0' : runs.toString();
       setRecentBalls(prev => [...prev.slice(-11), ballNotation]);
 
@@ -266,7 +260,6 @@ export default function Index() {
       
       setBatsmen([...batsmen]);
       
-      // Update bowler in the bowlers list
       updateBowlerInList(bowlerStats);
     }
   };
@@ -284,7 +277,6 @@ export default function Index() {
 
     setLastWicketType(wicketType || 'Out');
     
-    // Add player to out list
     setOutPlayers(prev => [...prev, striker]);
 
     const bowlerStats = bowler;
@@ -300,7 +292,6 @@ export default function Index() {
     setWickets(wickets + 1);
     setTotalBalls(totalBalls + 1);
     
-    // Add to recent balls
     setRecentBalls(prev => [...prev.slice(-11), 'W']);
     
     updateBowlerInList(bowlerStats);
@@ -344,6 +335,18 @@ export default function Index() {
     } else {
       toast.error("Please enter a valid number of overs (1-50)");
     }
+  };
+
+  const navigateToRecords = () => {
+    return {
+      batsmen,
+      bowlersList,
+      teamAName,
+      teamBName,
+      outPlayers,
+      retiredHurtPlayers,
+      gameTitle
+    };
   };
 
   const target = isSecondInnings ? firstInningsScore + 1 : 0;
@@ -435,6 +438,7 @@ export default function Index() {
               gameTitle={gameTitle}
               outPlayers={outPlayers}
               retiredHurtPlayers={retiredHurtPlayers}
+              lastWicketType={lastWicketType}
             />
           </TabsContent>
         </Tabs>
