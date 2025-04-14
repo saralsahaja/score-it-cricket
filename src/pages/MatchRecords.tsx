@@ -138,7 +138,7 @@ export default function MatchRecords() {
                                     RETIRED HURT
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                                  <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
                                     NOT OUT
                                   </Badge>
                                 )}
@@ -182,6 +182,7 @@ export default function MatchRecords() {
                         .sort((a, b) => b.wickets - a.wickets) // Sort by wickets (highest first)
                         .map((b, idx) => {
                           const economy = b.balls > 0 ? ((b.runs / (b.balls/6)) || 0).toFixed(2) : "0.00";
+                          const economyValue = parseFloat(economy);
                           
                           return (
                             <div 
@@ -203,7 +204,10 @@ export default function MatchRecords() {
                               <div className="col-span-1 text-center">{b.runs}</div>
                               <div className="col-span-1 text-center font-bold">{b.wickets}</div>
                               <div className="col-span-2 text-center">
-                                <Badge variant={parseFloat(economy) < 6 ? "success" : parseFloat(economy) < 8 ? "outline" : "destructive"} className="px-2">
+                                <Badge 
+                                  variant={economyValue < 6 ? "secondary" : economyValue < 8 ? "outline" : "destructive"} 
+                                  className={`px-2 ${economyValue < 6 ? 'bg-green-100 text-green-800' : ''}`}
+                                >
                                   {economy}
                                 </Badge>
                               </div>
