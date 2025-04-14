@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ export default function Index() {
   const [teamALogo, setTeamALogo] = useState<string | null>(null);
   const [teamBLogo, setTeamBLogo] = useState<string | null>(null);
   const [totalOvers, setTotalOvers] = useState(20);
+  const [gameTitle, setGameTitle] = useState("Live Scoreboard");
 
   const [batsmen, setBatsmen] = useState<BatsmanStats[]>([]);
   const [bowler, setBowler] = useState<BowlerStats | null>(null);
@@ -45,6 +47,9 @@ export default function Index() {
   const [nonStriker, setNonStriker] = useState<string | null>(null);
   const [currentBowler, setCurrentBowler] = useState<string | null>(null);
   const [isOverComplete, setIsOverComplete] = useState(false);
+  const [outPlayers, setOutPlayers] = useState<string[]>([]);
+  const [retiredHurtPlayers, setRetiredHurtPlayers] = useState<string[]>([]);
+  const [lastWicketType, setLastWicketType] = useState<string>("");
 
   const [totalRuns, setTotalRuns] = useState(0);
   const [totalBalls, setTotalBalls] = useState(0);
@@ -80,6 +85,8 @@ export default function Index() {
     setNonStriker(null);
     setCurrentBowler(null);
     setIsOverComplete(false);
+    setOutPlayers([]);
+    setRetiredHurtPlayers([]);
   };
 
   const handleAddPlayer = () => {
@@ -107,6 +114,12 @@ export default function Index() {
   };
 
   const handleSelectBatsman = (player: string, isStriker: boolean) => {
+    // Don't allow selecting out players
+    if (outPlayers.includes(player)) {
+      toast.error(`${player} is out and cannot bat again`);
+      return;
+    }
+    
     if (!batsmen.find(b => b.name === player)) {
       setBatsmen([...batsmen, { name: player, runs: 0, balls: 0, fours: 0, sixes: 0 }]);
     }
@@ -137,6 +150,22 @@ export default function Index() {
     setCurrentBowler(player);
     setIsOverComplete(false);
     toast.success(`${player} is now bowling`);
+  };
+
+  const handleRetireHurt = (player: string) => {
+    if (!player) return;
+    
+    // Add player to retired hurt list
+    setRetiredHurtPlayers(prev => [...prev, player]);
+    
+    // Remove from active batters
+    if (player === striker) {
+      setStriker(null);
+      toast.info(`${player} has retired hurt. Please select a new striker.`);
+    } else if (player === nonStriker) {
+      setNonStriker(null);
+      toast.info(`${player} has retired hurt. Please select a new non-striker.`);
+    }
   };
 
   const handleAddRun = (runs: number, extraType?: string) => {
@@ -247,11 +276,16 @@ export default function Index() {
     setBowlersList(bowlersList.map(b => b.name === bowlerStats.name ? { ...bowlerStats } : b));
   };
 
-  const handleWicket = () => {
+  const handleWicket = (wicketType?: string) => {
     if (!striker || !bowler) {
       toast.error("Please select striker and bowler first");
       return;
     }
+
+    setLastWicketType(wicketType || 'Out');
+    
+    // Add player to out list
+    setOutPlayers(prev => [...prev, striker]);
 
     const bowlerStats = bowler;
     bowlerStats.wickets += 1;
@@ -278,7 +312,7 @@ export default function Index() {
       setNonStriker(temp);
     }
     
-    toast.error(`${striker} is OUT!`);
+    toast.error(`${striker} is OUT! (${wicketType || 'Out'})`);
     setStriker(null);
     
     if (wickets >= 9) {
@@ -348,6 +382,8 @@ export default function Index() {
               handleLogoUpload={handleLogoUpload}
               totalOvers={totalOvers}
               handleTotalOversChange={handleTotalOversChange}
+              gameTitle={gameTitle}
+              setGameTitle={setGameTitle}
             />
           </TabsContent>
           
@@ -359,6 +395,7 @@ export default function Index() {
               handleSelectBowler={handleSelectBowler}
               handleAddRun={handleAddRun}
               handleWicket={handleWicket}
+              handleRetireHurt={handleRetireHurt}
               striker={striker}
               nonStriker={nonStriker}
               currentBowler={currentBowler}
@@ -366,6 +403,8 @@ export default function Index() {
               wickets={wickets}
               totalOvers={totalOvers}
               totalBalls={totalBalls}
+              outPlayers={outPlayers}
+              retiredHurtPlayers={retiredHurtPlayers}
             />
           </TabsContent>
           
@@ -393,6 +432,9 @@ export default function Index() {
               setTeamAName={setTeamAName}
               setTeamBName={setTeamBName}
               totalOvers={totalOvers}
+              gameTitle={gameTitle}
+              outPlayers={outPlayers}
+              retiredHurtPlayers={retiredHurtPlayers}
             />
           </TabsContent>
         </Tabs>

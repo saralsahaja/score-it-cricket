@@ -1,17 +1,13 @@
 
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Upload, Clock, Info } from "lucide-react";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { UserPlus, Users, Shield, Image, Clock } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 interface TeamSetupProps {
   teamA: string[];
@@ -30,6 +26,8 @@ interface TeamSetupProps {
   handleLogoUpload: (team: 'A' | 'B', e: React.ChangeEvent<HTMLInputElement>) => void;
   totalOvers: number;
   handleTotalOversChange: (overs: number) => void;
+  gameTitle: string;
+  setGameTitle: (title: string) => void;
 }
 
 export default function TeamSetup({
@@ -48,241 +46,250 @@ export default function TeamSetup({
   teamBLogo,
   handleLogoUpload,
   totalOvers,
-  handleTotalOversChange
+  handleTotalOversChange,
+  gameTitle,
+  setGameTitle
 }: TeamSetupProps) {
-  // Common match formats
-  const matchFormats = [
-    { name: "T20", overs: 20 },
-    { name: "ODI", overs: 50 },
-    { name: "T10", overs: 10 },
-    { name: "Test", overs: 90 }
-  ];
-
-  const handleCustomOvers = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value)) {
-      handleTotalOversChange(value);
-    }
+  const [customOvers, setCustomOvers] = useState<number>(totalOvers);
+  
+  const handleOversChange = (value: number) => {
+    setCustomOvers(value);
+    handleTotalOversChange(value);
   };
 
   return (
-    <Card className="shadow-lg border-2 border-primary/20">
-      <CardContent className="space-y-6 p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Card className="shadow-lg border-2 border-primary/20">
+        <CardContent className="space-y-4 p-6">
+          <div className="flex items-center gap-2 mb-3">
             <Users className="h-6 w-6 text-primary" />
-            Team Setup
-          </h2>
+            <h3 className="font-bold text-xl">Team Setup</h3>
+          </div>
           
-          <Card className="bg-blue-50 border-2 border-blue-200">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Clock className="h-5 w-5 text-primary" />
-                <h3 className="font-bold text-lg">Match Format</h3>
+          <div className="bg-secondary/30 p-4 rounded-lg border border-primary/10">
+            <div className="mb-4">
+              <Label htmlFor="gameTitle" className="block text-sm font-medium mb-1">Game Title</Label>
+              <Input
+                id="gameTitle"
+                value={gameTitle}
+                onChange={(e) => setGameTitle(e.target.value)}
+                placeholder="Enter game title"
+                className="mb-2"
+              />
+              <p className="text-xs text-muted-foreground">This will be displayed on the scoreboard.</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <Label htmlFor="teamAName" className="block text-sm font-medium mb-1">Team A Name</Label>
+                <Input
+                  id="teamAName"
+                  value={teamAName}
+                  onChange={(e) => setTeamAName(e.target.value)}
+                  placeholder="Batting Team"
+                />
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Select Format</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {matchFormats.map((format) => (
-                      <Button
-                        key={format.name}
-                        variant={totalOvers === format.overs ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleTotalOversChange(format.overs)}
-                        className={totalOvers === format.overs ? "bg-primary" : ""}
-                      >
-                        {format.name}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Custom Overs</label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="1"
-                      max="50"
-                      value={totalOvers}
-                      onChange={handleCustomOvers}
-                      className="w-24"
+              <div>
+                <Label htmlFor="teamBName" className="block text-sm font-medium mb-1">Team B Name</Label>
+                <Input
+                  id="teamBName"
+                  value={teamBName}
+                  onChange={(e) => setTeamBName(e.target.value)}
+                  placeholder="Bowling Team"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="block text-sm font-medium mb-1">Team A Logo</Label>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-10 w-10 border-2 border-primary/30">
+                    {teamALogo ? (
+                      <AvatarImage src={teamALogo} alt={teamAName} />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10">{teamAName.charAt(0)}</AvatarFallback>
+                    )}
+                  </Avatar>
+                  <Button variant="outline" className="flex-1 relative overflow-hidden" size="sm">
+                    <Image className="h-4 w-4 mr-1" />
+                    Upload Logo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={(e) => handleLogoUpload('A', e)}
                     />
-                    <span className="text-sm font-medium">overs</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    <Info className="h-3 w-3 inline mr-1" />
-                    Enter between 1-50 overs
-                  </p>
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <Tabs defaultValue="A" onValueChange={(value) => setActiveTeam(value)}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="A">Team A</TabsTrigger>
-            <TabsTrigger value="B">Team B</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="A">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Team Name</label>
-                    <Input
-                      value={teamAName}
-                      onChange={(e) => setTeamAName(e.target.value)}
-                      className="max-w-xs"
-                      placeholder="Enter team name"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Team Logo</label>
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-16 w-16 border-2 border-border">
-                        {teamALogo ? (
-                          <AvatarImage src={teamALogo} alt={teamAName} />
-                        ) : (
-                          <AvatarFallback>{teamAName.charAt(0)}</AvatarFallback>
-                        )}
-                      </Avatar>
-                      <label className="cursor-pointer">
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleLogoUpload('A', e)}
-                        />
-                        <div className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-md text-sm">
-                          <Upload className="h-4 w-4" />
-                          Upload Logo
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      value={playerName}
-                      onChange={(e) => setPlayerName(e.target.value)}
-                      placeholder="Enter player name"
-                      onKeyDown={(e) => e.key === "Enter" && handleAddPlayer()}
-                    />
-                    <Button onClick={handleAddPlayer}>Add Player</Button>
-                  </div>
-                  
-                  <div className="border rounded-md overflow-hidden">
-                    <div className="bg-muted p-2 text-sm font-medium">
-                      Team A Players ({teamA.length}/11)
-                    </div>
-                    {teamA.length === 0 ? (
-                      <div className="p-4 text-center text-muted-foreground">
-                        No players added yet
-                      </div>
+              <div>
+                <Label className="block text-sm font-medium mb-1">Team B Logo</Label>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-10 w-10 border-2 border-primary/30">
+                    {teamBLogo ? (
+                      <AvatarImage src={teamBLogo} alt={teamBName} />
                     ) : (
-                      <div className="divide-y">
-                        {teamA.map((p, i) => (
-                          <div key={i} className="p-2 flex items-center">
-                            <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium mr-2">
-                              {i + 1}
-                            </span>
-                            {p}
-                          </div>
-                        ))}
-                      </div>
+                      <AvatarFallback className="bg-primary/10">{teamBName.charAt(0)}</AvatarFallback>
                     )}
-                  </div>
+                  </Avatar>
+                  <Button variant="outline" className="flex-1 relative overflow-hidden" size="sm">
+                    <Image className="h-4 w-4 mr-1" />
+                    Upload Logo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={(e) => handleLogoUpload('B', e)}
+                    />
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </div>
+          </div>
           
-          <TabsContent value="B">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Team Name</label>
-                    <Input
-                      value={teamBName}
-                      onChange={(e) => setTeamBName(e.target.value)}
-                      className="max-w-xs"
-                      placeholder="Enter team name"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Team Logo</label>
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-16 w-16 border-2 border-border">
-                        {teamBLogo ? (
-                          <AvatarImage src={teamBLogo} alt={teamBName} />
-                        ) : (
-                          <AvatarFallback>{teamBName.charAt(0)}</AvatarFallback>
-                        )}
-                      </Avatar>
-                      <label className="cursor-pointer">
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleLogoUpload('B', e)}
-                        />
-                        <div className="flex items-center gap-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-md text-sm">
-                          <Upload className="h-4 w-4" />
-                          Upload Logo
-                        </div>
-                      </label>
-                    </div>
-                  </div>
+          <div className="bg-secondary/30 p-4 rounded-lg border border-primary/10">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="h-5 w-5 text-primary" />
+              <h4 className="font-bold">Match Format</h4>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <Button 
+                variant={totalOvers === 20 ? "default" : "outline"} 
+                onClick={() => handleOversChange(20)}
+                className={totalOvers === 20 ? "border-2 border-primary" : ""}
+              >
+                T20 (20 Overs)
+              </Button>
+              <Button 
+                variant={totalOvers === 50 ? "default" : "outline"} 
+                onClick={() => handleOversChange(50)}
+                className={totalOvers === 50 ? "border-2 border-primary" : ""}
+              >
+                ODI (50 Overs)
+              </Button>
+              <Button 
+                variant={totalOvers === 10 ? "default" : "outline"} 
+                onClick={() => handleOversChange(10)}
+                className={totalOvers === 10 ? "border-2 border-primary" : ""}
+              >
+                T10 (10 Overs)
+              </Button>
+              <Button 
+                variant={totalOvers === 5 ? "default" : "outline"} 
+                onClick={() => handleOversChange(5)}
+                className={totalOvers === 5 ? "border-2 border-primary" : ""}
+              >
+                Quick (5 Overs)
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Label htmlFor="customOvers" className="text-sm whitespace-nowrap">Custom:</Label>
+              <Input
+                id="customOvers"
+                type="number"
+                min="1"
+                max="50"
+                value={customOvers}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value) && value > 0 && value <= 50) {
+                    setCustomOvers(value);
+                  }
+                }}
+                className="w-24"
+              />
+              <Button 
+                onClick={() => handleOversChange(customOvers)}
+                className="ml-2"
+                disabled={customOvers === totalOvers}
+              >
+                Apply
+              </Button>
+              <p className="text-xs text-muted-foreground ml-2">Current: {totalOvers} overs</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card className="shadow-lg border-2 border-primary/20">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <UserPlus className="h-6 w-6 text-primary" />
+            <h3 className="font-bold text-xl">Add Players</h3>
+          </div>
+          
+          <Tabs value={activeTeam} onValueChange={setActiveTeam} className="mb-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="A" className="relative">
+                {teamAName}
+                <Badge className="absolute -top-2 -right-2 bg-primary">{teamA.length}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="B" className="relative">
+                {teamBName}
+                <Badge className="absolute -top-2 -right-2 bg-primary">{teamB.length}</Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          <div className="flex items-end gap-2 mb-4">
+            <div className="flex-1">
+              <Label htmlFor="playerName" className="block text-sm font-medium mb-1">
+                Player Name
+              </Label>
+              <Input
+                id="playerName"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="Enter player name"
+                onKeyDown={(e) => e.key === 'Enter' && handleAddPlayer()}
+              />
+            </div>
+            <Button onClick={handleAddPlayer} className="flex-shrink-0">
+              Add to {activeTeam === "A" ? teamAName : teamBName}
+            </Button>
+          </div>
+          
+          <div className="bg-secondary/30 p-3 rounded-md border border-primary/10 min-h-[240px] max-h-[240px] overflow-y-auto">
+            <TabsContent value="A" className="space-y-2 mt-0">
+              {teamA.length === 0 ? (
+                <div className="text-center italic text-muted-foreground p-4">
+                  No players added to {teamAName} yet
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      value={playerName}
-                      onChange={(e) => setPlayerName(e.target.value)}
-                      placeholder="Enter player name"
-                      onKeyDown={(e) => e.key === "Enter" && handleAddPlayer()}
-                    />
-                    <Button onClick={handleAddPlayer}>Add Player</Button>
-                  </div>
-                  
-                  <div className="border rounded-md overflow-hidden">
-                    <div className="bg-muted p-2 text-sm font-medium">
-                      Team B Players ({teamB.length}/11)
+              ) : (
+                teamA.map((player, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-background rounded-md shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-primary" />
+                      <span>{player}</span>
                     </div>
-                    {teamB.length === 0 ? (
-                      <div className="p-4 text-center text-muted-foreground">
-                        No players added yet
-                      </div>
-                    ) : (
-                      <div className="divide-y">
-                        {teamB.map((p, i) => (
-                          <div key={i} className="p-2 flex items-center">
-                            <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium mr-2">
-                              {i + 1}
-                            </span>
-                            {p}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <Badge variant="outline">{index + 1}</Badge>
                   </div>
+                ))
+              )}
+            </TabsContent>
+            <TabsContent value="B" className="space-y-2 mt-0">
+              {teamB.length === 0 ? (
+                <div className="text-center italic text-muted-foreground p-4">
+                  No players added to {teamBName} yet
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+              ) : (
+                teamB.map((player, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-background rounded-md shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-primary" />
+                      <span>{player}</span>
+                    </div>
+                    <Badge variant="outline">{index + 1}</Badge>
+                  </div>
+                ))
+              )}
+            </TabsContent>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

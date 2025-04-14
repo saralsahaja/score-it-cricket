@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, Award, Star, Trophy, Edit2, Pencil } from "lucide-react";
+import { LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, Award, Star, Trophy } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 
@@ -29,6 +30,9 @@ interface ScorecardProps {
   setTeamAName: (name: string) => void;
   setTeamBName: (name: string) => void;
   totalOvers: number;
+  gameTitle: string;
+  outPlayers: string[];
+  retiredHurtPlayers: string[];
 }
 
 export default function Scoreboard({
@@ -53,15 +57,11 @@ export default function Scoreboard({
   recentBalls,
   setTeamAName,
   setTeamBName,
-  totalOvers
+  totalOvers,
+  gameTitle,
+  outPlayers,
+  retiredHurtPlayers
 }: ScorecardProps) {
-  const [isEditingTeamA, setIsEditingTeamA] = useState(false);
-  const [isEditingTeamB, setIsEditingTeamB] = useState(false);
-  const [tempTeamAName, setTempTeamAName] = useState(teamAName);
-  const [tempTeamBName, setTempTeamBName] = useState(teamBName);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [scoreboardTitle, setScoreboardTitle] = useState("Live Scoreboard");
-
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
   const oversText = `${overs}.${balls}`;
@@ -84,20 +84,6 @@ export default function Scoreboard({
       )
     : null;
 
-  const handleTeamANameSave = () => {
-    setTeamAName(tempTeamAName);
-    setIsEditingTeamA(false);
-  };
-
-  const handleTeamBNameSave = () => {
-    setTeamBName(tempTeamBName);
-    setIsEditingTeamB(false);
-  };
-
-  const handleTitleSave = () => {
-    setIsEditingTitle(false);
-  };
-
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
     if (ball === '0') return 'bg-gray-300';
@@ -118,32 +104,15 @@ export default function Scoreboard({
       <CardContent className="space-y-6 p-6">
         <div className="flex items-center justify-center gap-2 mb-4">
           <LineChart className="h-7 w-7 text-primary" />
-          {isEditingTitle ? (
-            <div className="flex items-center gap-1">
-              <Input 
-                value={scoreboardTitle}
-                onChange={(e) => setScoreboardTitle(e.target.value)}
-                className="text-2xl font-bold text-center border-2 border-primary w-64"
-                autoFocus
-                onBlur={handleTitleSave}
-                onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
-              />
-            </div>
-          ) : (
-            <h2 
-              className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-1 cursor-pointer"
-              onClick={() => setIsEditingTitle(true)}
-            >
-              {scoreboardTitle}
-              <Edit2 className="h-5 w-5 text-primary" />
-            </h2>
-          )}
+          <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            {gameTitle}
+          </h2>
         </div>
         
         <div className="bg-gradient-to-r from-blue-100 via-purple-100 to-blue-100 rounded-lg p-6 border-2 border-primary">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <div className="relative bg-blue-100 rounded-full p-2 border-2 border-blue-300 cursor-pointer group">
+              <div className="relative bg-blue-100 rounded-full p-2 border-2 border-blue-300">
                 <Avatar className="h-16 w-16">
                   {teamALogo ? (
                     <AvatarImage src={teamALogo} alt={teamAName} />
@@ -151,31 +120,9 @@ export default function Scoreboard({
                     <AvatarFallback className="bg-blue-200 text-blue-800 font-bold text-2xl">{teamAName.charAt(0)}</AvatarFallback>
                   )}
                 </Avatar>
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Pencil className="h-6 w-6 text-white" />
-                </div>
               </div>
-              <div className="relative">
-                {isEditingTeamA ? (
-                  <div className="flex items-center gap-1">
-                    <Input 
-                      value={tempTeamAName}
-                      onChange={(e) => setTempTeamAName(e.target.value)}
-                      className="w-32 font-bold text-lg border-2 border-primary"
-                      autoFocus
-                      onBlur={handleTeamANameSave}
-                      onKeyDown={(e) => e.key === 'Enter' && handleTeamANameSave()}
-                    />
-                  </div>
-                ) : (
-                  <div 
-                    className="font-bold text-2xl text-blue-800 flex items-center gap-1 cursor-pointer"
-                    onClick={() => setIsEditingTeamA(true)}
-                  >
-                    {teamAName}
-                    <Edit2 className="h-4 w-4 text-blue-600" />
-                  </div>
-                )}
+              <div className="font-bold text-2xl text-blue-800">
+                {teamAName}
               </div>
             </div>
             
@@ -193,29 +140,10 @@ export default function Scoreboard({
             </div>
             
             <div className="flex items-center gap-2">
-              <div className="relative">
-                {isEditingTeamB ? (
-                  <div className="flex items-center gap-1">
-                    <Input 
-                      value={tempTeamBName}
-                      onChange={(e) => setTempTeamBName(e.target.value)}
-                      className="w-32 font-bold text-lg border-2 border-primary"
-                      autoFocus
-                      onBlur={handleTeamBNameSave}
-                      onKeyDown={(e) => e.key === 'Enter' && handleTeamBNameSave()}
-                    />
-                  </div>
-                ) : (
-                  <div 
-                    className="font-bold text-2xl text-purple-800 flex items-center gap-1 cursor-pointer"
-                    onClick={() => setIsEditingTeamB(true)}
-                  >
-                    {teamBName}
-                    <Edit2 className="h-4 w-4 text-purple-600" />
-                  </div>
-                )}
+              <div className="font-bold text-2xl text-purple-800">
+                {teamBName}
               </div>
-              <div className="relative bg-purple-100 rounded-full p-2 border-2 border-purple-300 cursor-pointer group">
+              <div className="relative bg-purple-100 rounded-full p-2 border-2 border-purple-300">
                 <Avatar className="h-16 w-16">
                   {teamBLogo ? (
                     <AvatarImage src={teamBLogo} alt={teamBName} />
@@ -223,9 +151,6 @@ export default function Scoreboard({
                     <AvatarFallback className="bg-purple-200 text-purple-800 font-bold text-2xl">{teamBName.charAt(0)}</AvatarFallback>
                   )}
                 </Avatar>
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Pencil className="h-6 w-6 text-white" />
-                </div>
               </div>
             </div>
           </div>
@@ -324,22 +249,30 @@ export default function Scoreboard({
                   {batsmen.map((b, i) => {
                     const isActive = b.name === striker || b.name === nonStriker;
                     const isStriker = b.name === striker;
+                    const isOut = outPlayers.includes(b.name);
+                    const isRetiredHurt = retiredHurtPlayers.includes(b.name);
                     const strikeRate = b.balls > 0 ? ((b.runs / b.balls) * 100).toFixed(1) : "0.0";
                     
                     return (
                       <div 
                         key={i} 
                         className={`grid grid-cols-12 p-2 rounded-md ${
-                          isActive 
-                            ? isStriker 
-                              ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300' 
-                              : 'bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300'
-                            : 'border border-border'
+                          isOut 
+                            ? 'bg-red-50 border-2 border-red-300' 
+                            : isRetiredHurt
+                              ? 'bg-yellow-50 border-2 border-yellow-300'
+                              : isActive 
+                                ? isStriker 
+                                  ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300' 
+                                  : 'bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300'
+                                : 'border border-border'
                         } ${b === topScorer && b.runs > 0 ? 'ring-2 ring-amber-400' : ''}`}
                       >
                         <div className="col-span-4 font-medium flex items-center text-xl">
                           {b.name} 
                           {isStriker && <Badge className="ml-1 bg-blue-500 text-white">*</Badge>}
+                          {isOut && <Badge className="ml-1 bg-red-500 text-white">OUT</Badge>}
+                          {isRetiredHurt && <Badge className="ml-1 bg-yellow-500 text-white">HURT</Badge>}
                           {b === topScorer && b.runs > 0 && <Star className="h-4 w-4 ml-1 fill-amber-400 text-amber-400" />}
                         </div>
                         <div className="col-span-2 text-center font-bold text-xl">{b.runs}</div>

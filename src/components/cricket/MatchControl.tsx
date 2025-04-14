@@ -1,12 +1,14 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, UserCheck, Zap, Slash, Plus, AlertTriangle, Waves, ArrowUpRight, LifeBuoy, Clock } from "lucide-react";
+import { User, UserCheck, Zap, Slash, Plus, AlertTriangle, Waves, ArrowUpRight, LifeBuoy, Clock, Heart } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface MatchControlProps {
   teamA: string[];
@@ -14,7 +16,8 @@ interface MatchControlProps {
   handleSelectBatsman: (player: string, isStriker: boolean) => void;
   handleSelectBowler: (player: string) => void;
   handleAddRun: (runs: number, extraType?: string) => void;
-  handleWicket: () => void;
+  handleWicket: (wicketType?: string) => void;
+  handleRetireHurt: (player: string) => void;
   striker: string | null;
   nonStriker: string | null;
   currentBowler: string | null;
@@ -22,6 +25,8 @@ interface MatchControlProps {
   wickets: number;
   totalOvers: number;
   totalBalls: number;
+  outPlayers: string[];
+  retiredHurtPlayers: string[];
 }
 
 export default function MatchControl({
@@ -31,20 +36,29 @@ export default function MatchControl({
   handleSelectBowler,
   handleAddRun,
   handleWicket,
+  handleRetireHurt,
   striker,
   nonStriker,
   currentBowler,
   isOverComplete,
   wickets,
   totalOvers,
-  totalBalls
+  totalBalls,
+  outPlayers,
+  retiredHurtPlayers
 }: MatchControlProps) {
   const [extraRunsValue, setExtraRunsValue] = useState<number>(1);
   const [showRunsPopover, setShowRunsPopover] = useState<string | null>(null);
+  const [wicketDialogOpen, setWicketDialogOpen] = useState(false);
 
   const handleExtraRunsSelect = (runs: number, extraType: string) => {
     handleAddRun(runs, extraType);
     setShowRunsPopover(null);
+  };
+
+  const handleWicketSelection = (wicketType: string) => {
+    handleWicket(wicketType);
+    setWicketDialogOpen(false);
   };
 
   // Calculate current over and remaining overs
@@ -80,6 +94,9 @@ export default function MatchControl({
     );
   };
 
+  const isPlayerOut = (player: string) => outPlayers.includes(player);
+  const isPlayerRetiredHurt = (player: string) => retiredHurtPlayers.includes(player);
+  
   return (
     <Card className="shadow-lg border-2 border-primary/20">
       <CardContent className="space-y-6 p-6">
@@ -134,14 +151,23 @@ export default function MatchControl({
               ) : (
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                   {teamA.map((p, i) => (
-                    <div key={i} className="flex gap-2 items-center p-2 border border-border rounded-md">
+                    <div 
+                      key={i} 
+                      className={`flex gap-2 items-center p-2 border rounded-md ${
+                        isPlayerOut(p) 
+                          ? 'border-red-500 bg-red-50 text-red-700' 
+                          : isPlayerRetiredHurt(p)
+                            ? 'border-yellow-500 bg-yellow-50 text-yellow-700'
+                            : 'border-border'
+                      }`}
+                    >
                       <span className="flex-1">{p}</span>
                       <Button 
                         size="sm"
                         variant={striker === p ? "default" : "outline"}
                         onClick={() => handleSelectBatsman(p, true)}
                         className="text-xs"
-                        disabled={wickets >= 10}
+                        disabled={wickets >= 10 || isPlayerOut(p)}
                       >
                         <UserCheck className="h-3 w-3 mr-1" />
                         Striker
@@ -151,11 +177,22 @@ export default function MatchControl({
                         variant={nonStriker === p ? "default" : "outline"}
                         onClick={() => handleSelectBatsman(p, false)}
                         className="text-xs"
-                        disabled={wickets >= 10}
+                        disabled={wickets >= 10 || isPlayerOut(p)}
                       >
                         <User className="h-3 w-3 mr-1" />
                         Non-Striker
                       </Button>
+                      {(striker === p || nonStriker === p) && (
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRetireHurt(p)}
+                          className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
+                        >
+                          <Heart className="h-3 w-3 mr-1" />
+                          Retire
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -232,15 +269,32 @@ export default function MatchControl({
                   {r}
                 </Button>
               ))}
-              <Button 
-                onClick={handleWicket}
-                variant="destructive"
-                className="text-lg font-bold"
-                disabled={wickets >= 10}
-              >
-                <Slash className="h-4 w-4 mr-1" />
-                W
-              </Button>
+              <Dialog open={wicketDialogOpen} onOpenChange={setWicketDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="destructive"
+                    className="text-lg font-bold"
+                    disabled={wickets >= 10}
+                  >
+                    <Slash className="h-4 w-4 mr-1" />
+                    W
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="text-center text-xl font-bold">Select Wicket Type</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid grid-cols-2 gap-2 py-4">
+                    <Button onClick={() => handleWicketSelection('Bowled')} className="bg-red-600 hover:bg-red-700">Bowled</Button>
+                    <Button onClick={() => handleWicketSelection('Caught')} className="bg-red-600 hover:bg-red-700">Caught</Button>
+                    <Button onClick={() => handleWicketSelection('LBW')} className="bg-red-600 hover:bg-red-700">LBW</Button>
+                    <Button onClick={() => handleWicketSelection('Run Out')} className="bg-red-600 hover:bg-red-700">Run Out</Button>
+                    <Button onClick={() => handleWicketSelection('Stumped')} className="bg-red-600 hover:bg-red-700">Stumped</Button>
+                    <Button onClick={() => handleWicketSelection('Hit Wicket')} className="bg-red-600 hover:bg-red-700">Hit Wicket</Button>
+                    <Button onClick={() => handleWicketSelection('Other')} className="bg-red-600 hover:bg-red-700 col-span-2">Other</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
             
             <div className="mt-4">
