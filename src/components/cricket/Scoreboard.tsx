@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, Award, Star, Trophy } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface ScorecardProps {
   totalRuns: number;
@@ -67,6 +68,7 @@ export default function Scoreboard({
   const [showWicketPopup, setShowWicketPopup] = useState(false);
   const [lastOutBatsman, setLastOutBatsman] = useState<{name: string, runs: number, balls: number} | null>(null);
   const [lastWicketTimestamp, setLastWicketTimestamp] = useState<number>(0);
+  const { toast } = useToast();
   
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
@@ -95,11 +97,20 @@ export default function Scoreboard({
   const activeBatsmen = [activeBatsman1, activeBatsman2].filter(Boolean);
 
   useEffect(() => {
+    console.log("Wicket detection running, lastWicketType:", lastWicketType);
+    console.log("outPlayers:", outPlayers);
+    
     if (lastWicketType && outPlayers.length > 0) {
       const currentTime = Date.now();
+      console.log("Current time:", currentTime);
+      console.log("Last wicket timestamp:", lastWicketTimestamp);
+      console.log("Time difference:", currentTime - lastWicketTimestamp);
+      
       if (currentTime - lastWicketTimestamp > 1000) {
         const lastOut = outPlayers[outPlayers.length - 1];
         const lastOutStats = batsmen.find(b => b.name === lastOut);
+        console.log("Last out batsman:", lastOut);
+        console.log("Last out stats:", lastOutStats);
         
         if (lastOutStats) {
           setLastOutBatsman({
@@ -110,11 +121,17 @@ export default function Scoreboard({
           setShowWicketPopup(true);
           setLastWicketTimestamp(currentTime);
           
+          console.log("Setting timeout to hide popup after 10 seconds");
           const timer = setTimeout(() => {
+            console.log("Timeout triggered, hiding popup");
             setShowWicketPopup(false);
-          }, 10000); // Changed from 3000 to 10000 milliseconds (10 seconds)
+          }, 10000);
           
-          return () => clearTimeout(timer);
+          // Clear the timeout when component unmounts or dependencies change
+          return () => {
+            console.log("Clearing timeout");
+            clearTimeout(timer);
+          };
         }
       }
     }
