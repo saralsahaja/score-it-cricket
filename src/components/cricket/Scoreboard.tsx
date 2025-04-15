@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -111,7 +112,7 @@ export default function Scoreboard({
           
           const timer = setTimeout(() => {
             setShowWicketPopup(false);
-          }, 3000);
+          }, 10000); // Changed from 3000 to 10000 milliseconds (10 seconds)
           
           return () => clearTimeout(timer);
         }
