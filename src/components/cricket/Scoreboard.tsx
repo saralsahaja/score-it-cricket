@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -112,7 +113,7 @@ export default function Scoreboard({
         return () => clearTimeout(timer);
       }
     }
-  }, [outPlayers, lastWicketType]);
+  }, [outPlayers, lastWicketType, batsmen]);
 
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';

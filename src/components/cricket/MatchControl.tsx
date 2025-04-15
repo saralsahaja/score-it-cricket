@@ -65,11 +65,31 @@ export default function MatchControl({
   const handleBatsmanSelection = (player: string, isStriker: boolean) => {
     handleSelectBatsman(player, isStriker);
     
-    // Show notification for new batsman
+    // Show notification for new batsman - improved with position information
     const position = isStriker ? "striker" : "non-striker";
     const batsmanNumber = teamA.indexOf(player) + 1;
-    toast.success(`New batsman: ${player} (No. ${batsmanNumber}) as ${position}`, {
+    
+    // Create a more informative toast message
+    let toastMessage = `New batsman: ${player}`;
+    
+    // Add batting position number
+    if (batsmanNumber > 0) {
+      toastMessage += ` (No. ${batsmanNumber})`;
+    }
+    
+    // Add batting position (striker/non-striker)
+    toastMessage += ` as ${position}`;
+    
+    // Show improved toast notification
+    toast.success(toastMessage, {
       duration: 3000,
+      position: "top-center",
+      icon: "🏏",
+      style: {
+        backgroundColor: isStriker ? "#e0f2fe" : "#dcfce7",
+        color: isStriker ? "#0369a1" : "#166534",
+        border: `2px solid ${isStriker ? "#0ea5e9" : "#22c55e"}`,
+      },
     });
   };
 
