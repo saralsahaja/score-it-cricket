@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface MatchControlProps {
   teamA: string[];
@@ -59,6 +60,17 @@ export default function MatchControl({
   const handleWicketSelection = (wicketType: string) => {
     handleWicket(wicketType);
     setWicketDialogOpen(false);
+  };
+
+  const handleBatsmanSelection = (player: string, isStriker: boolean) => {
+    handleSelectBatsman(player, isStriker);
+    
+    // Show notification for new batsman
+    const position = isStriker ? "striker" : "non-striker";
+    const batsmanNumber = teamA.indexOf(player) + 1;
+    toast.success(`New batsman: ${player} (No. ${batsmanNumber}) as ${position}`, {
+      duration: 3000,
+    });
   };
 
   // Calculate current over and remaining overs
@@ -161,11 +173,16 @@ export default function MatchControl({
                             : 'border-border'
                       }`}
                     >
-                      <span className="flex-1">{p}</span>
+                      <span className="flex-1">
+                        {p} 
+                        <span className="text-xs text-muted-foreground ml-1">
+                          #{i+1}
+                        </span>
+                      </span>
                       <Button 
                         size="sm"
                         variant={striker === p ? "default" : "outline"}
-                        onClick={() => handleSelectBatsman(p, true)}
+                        onClick={() => handleBatsmanSelection(p, true)}
                         className="text-xs"
                         disabled={wickets >= 10 || isPlayerOut(p)}
                       >
@@ -175,7 +192,7 @@ export default function MatchControl({
                       <Button 
                         size="sm"
                         variant={nonStriker === p ? "default" : "outline"}
-                        onClick={() => handleSelectBatsman(p, false)}
+                        onClick={() => handleBatsmanSelection(p, false)}
                         className="text-xs"
                         disabled={wickets >= 10 || isPlayerOut(p)}
                       >

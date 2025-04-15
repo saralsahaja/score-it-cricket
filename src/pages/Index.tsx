@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import TeamSetup from "@/components/cricket/TeamSetup";
 import MatchControl from "@/components/cricket/MatchControl";
 import Scoreboard from "@/components/cricket/Scoreboard";
 import { CricketAppHeader } from "@/components/cricket/CricketAppHeader";
+import CustomGameSetup, { CustomGameData } from "@/components/cricket/CustomGameSetup";
 
 interface BatsmanStats {
   name: string;
@@ -56,6 +58,7 @@ export default function Index() {
   const [firstInningsScore, setFirstInningsScore] = useState(0);
   const [isSecondInnings, setIsSecondInnings] = useState(false);
   const [recentBalls, setRecentBalls] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState("setup");
 
   useEffect(() => {
     const maxBalls = totalOvers * 6;
@@ -349,6 +352,55 @@ export default function Index() {
     };
   };
 
+  const handleApplyCustomSetup = (data: CustomGameData) => {
+    // Calculate total overs and balls
+    const totalBallsCount = (data.overs * 6) + data.balls;
+    
+    // Set game state from custom setup
+    setTotalRuns(data.runs);
+    setWickets(data.wickets);
+    setTotalBalls(totalBallsCount);
+    
+    // Set batsmen
+    setBatsmen(data.batsmen.map(b => ({
+      name: b.name,
+      runs: b.runs,
+      balls: b.balls,
+      fours: b.fours,
+      sixes: b.sixes
+    })));
+    
+    // Set current active batsmen
+    setStriker(data.striker);
+    setNonStriker(data.nonStriker);
+    
+    // Set bowlers
+    const formattedBowlers = data.bowlers.map(b => ({
+      name: b.name,
+      runs: b.runs,
+      balls: (b.overs * 6) + b.balls,
+      wickets: b.wickets,
+      maidens: b.maidens
+    }));
+    
+    setBowlersList(formattedBowlers);
+    
+    // Set current bowler
+    const currentBowlerData = formattedBowlers.find(b => b.name === data.currentBowler);
+    if (currentBowlerData) {
+      setBowler(currentBowlerData);
+      setCurrentBowler(data.currentBowler);
+    }
+    
+    // Set out players
+    setOutPlayers(data.outPlayers);
+    
+    // Move to match control tab
+    setActiveTab("control");
+    
+    toast.success("Custom game setup applied. Game state has been updated.");
+  };
+
   const target = isSecondInnings ? firstInningsScore + 1 : 0;
   const crr = totalBalls > 0 ? (totalRuns / (totalBalls / 6)).toFixed(2) : "0.00";
   const ballsLeft = totalOvers * 6 - totalBalls;
@@ -360,9 +412,10 @@ export default function Index() {
       <CricketAppHeader />
       
       <main className="container mx-auto py-6 px-4">
-        <Tabs defaultValue="setup" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="setup">Team Setup</TabsTrigger>
+            <TabsTrigger value="customSetup">Custom Start</TabsTrigger>
             <TabsTrigger value="control">Match Control</TabsTrigger>
             <TabsTrigger value="scoreboard">Scoreboard</TabsTrigger>
           </TabsList>
@@ -387,6 +440,14 @@ export default function Index() {
               handleTotalOversChange={handleTotalOversChange}
               gameTitle={gameTitle}
               setGameTitle={setGameTitle}
+            />
+          </TabsContent>
+          
+          <TabsContent value="customSetup">
+            <CustomGameSetup 
+              teamA={teamA}
+              teamB={teamB}
+              applyCustomSetup={handleApplyCustomSetup}
             />
           </TabsContent>
           
