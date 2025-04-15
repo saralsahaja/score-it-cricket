@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -65,22 +64,11 @@ export default function MatchControl({
   const handleBatsmanSelection = (player: string, isStriker: boolean) => {
     handleSelectBatsman(player, isStriker);
     
-    // Show notification for new batsman - improved with position information
     const position = isStriker ? "striker" : "non-striker";
     const batsmanNumber = teamA.indexOf(player) + 1;
     
-    // Create a more informative toast message
-    let toastMessage = `New batsman: ${player}`;
+    const toastMessage = `New batsman: ${player}${batsmanNumber > 0 ? ` (No. ${batsmanNumber})` : ''} as ${position}`;
     
-    // Add batting position number
-    if (batsmanNumber > 0) {
-      toastMessage += ` (No. ${batsmanNumber})`;
-    }
-    
-    // Add batting position (striker/non-striker)
-    toastMessage += ` as ${position}`;
-    
-    // Show improved toast notification
     toast.success(toastMessage, {
       duration: 3000,
       position: "top-center",
@@ -93,7 +81,6 @@ export default function MatchControl({
     });
   };
 
-  // Calculate current over and remaining overs
   const currentOver = Math.floor(totalBalls / 6) + 1;
   const remainingOvers = totalOvers - Math.floor(totalBalls / 6);
   const remainingBalls = 6 - (totalBalls % 6);

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +65,7 @@ export default function Scoreboard({
 }: ScorecardProps) {
   const [showWicketPopup, setShowWicketPopup] = useState(false);
   const [lastOutBatsman, setLastOutBatsman] = useState<{name: string, runs: number, balls: number} | null>(null);
+  const [lastWicketTimestamp, setLastWicketTimestamp] = useState<number>(0);
   
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
@@ -95,25 +95,29 @@ export default function Scoreboard({
 
   useEffect(() => {
     if (lastWicketType && outPlayers.length > 0) {
-      const lastOut = outPlayers[outPlayers.length - 1];
-      const lastOutStats = batsmen.find(b => b.name === lastOut);
-      
-      if (lastOutStats) {
-        setLastOutBatsman({
-          name: lastOutStats.name,
-          runs: lastOutStats.runs,
-          balls: lastOutStats.balls
-        });
-        setShowWicketPopup(true);
+      const currentTime = Date.now();
+      if (currentTime - lastWicketTimestamp > 1000) {
+        const lastOut = outPlayers[outPlayers.length - 1];
+        const lastOutStats = batsmen.find(b => b.name === lastOut);
         
-        const timer = setTimeout(() => {
-          setShowWicketPopup(false);
-        }, 3000);
-        
-        return () => clearTimeout(timer);
+        if (lastOutStats) {
+          setLastOutBatsman({
+            name: lastOutStats.name,
+            runs: lastOutStats.runs,
+            balls: lastOutStats.balls
+          });
+          setShowWicketPopup(true);
+          setLastWicketTimestamp(currentTime);
+          
+          const timer = setTimeout(() => {
+            setShowWicketPopup(false);
+          }, 3000);
+          
+          return () => clearTimeout(timer);
+        }
       }
     }
-  }, [outPlayers, lastWicketType, batsmen]);
+  }, [outPlayers, lastWicketType, batsmen, lastWicketTimestamp]);
 
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
