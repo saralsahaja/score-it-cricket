@@ -129,13 +129,19 @@ export default function Scoreboard({
   const currentOver = Object.keys(recentTwoOvers)[0] ? parseInt(Object.keys(recentTwoOvers)[0]) : -1;
   const previousOver = Object.keys(recentTwoOvers)[1] ? parseInt(Object.keys(recentTwoOvers)[1]) : -1;
 
+  // Cleanup function for the wicket popup timer
+  const cleanupWicketPopupTimer = () => {
+    if (popupTimerRef.current) {
+      clearTimeout(popupTimerRef.current);
+      popupTimerRef.current = null;
+      console.log("Cleaned up wicket popup timer");
+    }
+  };
+
   // Clear timer on component unmount
   useEffect(() => {
     return () => {
-      if (popupTimerRef.current) {
-        clearTimeout(popupTimerRef.current);
-        console.log("Cleanup: Cleared popup timer on unmount");
-      }
+      cleanupWicketPopupTimer();
     };
   }, []);
 
@@ -145,10 +151,7 @@ export default function Scoreboard({
     console.log("outPlayers:", outPlayers);
     
     // Clear existing timer if any
-    if (popupTimerRef.current) {
-      clearTimeout(popupTimerRef.current);
-      console.log("Cleared existing popup timer");
-    }
+    cleanupWicketPopupTimer();
     
     if (lastWicketType && outPlayers.length > 0) {
       const currentTime = Date.now();
@@ -181,6 +184,12 @@ export default function Scoreboard({
     }
   }, [outPlayers, lastWicketType, batsmen, lastWicketTimestamp]);
 
+  // Handle manual popup close
+  const handleCloseWicketPopup = () => {
+    setShowWicketPopup(false);
+    cleanupWicketPopupTimer();
+  };
+
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
     if (ball === '0') return 'bg-gray-300';
@@ -195,11 +204,19 @@ export default function Scoreboard({
     if (ball === 'OT') return 'bg-pink-400';
     return 'bg-gray-200';
   };
+
+  // Calculate over runs total
+  const calculateOverTotal = (balls: string[]) => {
+    return balls.reduce((sum, ball) => {
+      const value = parseInt(ball);
+      return sum + (isNaN(value) ? 0 : value);
+    }, 0);
+  };
   
   return (
     <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden">
       {/* Wicket Popup - Using Dialog component to ensure it works correctly */}
-      <Dialog open={showWicketPopup} onOpenChange={setShowWicketPopup}>
+      <Dialog open={showWicketPopup} onOpenChange={handleCloseWicketPopup}>
         <DialogContent className="bg-red-100 rounded-xl border-4 border-red-500 p-6 max-w-md">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-red-700 mb-2">WICKET!</h2>
@@ -267,58 +284,52 @@ export default function Scoreboard({
             </div>
           </div>
           
-          {/* Ball by Ball section - Redesigned for horizontal display */}
+          {/* Ball by Ball section - Redesigned for single row display */}
           {Object.keys(recentTwoOvers).length > 0 && (
             <div className="mb-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
               <div className="text-sm text-indigo-700 mb-3 font-semibold">Ball by Ball</div>
-              <div className="grid grid-cols-1 gap-y-4">
-                {/* Previous Over */}
-                {previousOver >= 0 && (
-                  <div className="rounded-lg border border-gray-200 overflow-hidden">
-                    <div className="bg-blue-100 px-3 py-1 border-b border-gray-200">
-                      <span className="text-sm font-semibold text-blue-800">Last Over: </span>
-                    </div>
-                    <div className="flex flex-row-reverse items-center p-2 bg-white">
-                      {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => (
-                        <div key={`prev-${idx}`} className="flex items-center mx-1">
-                          <div 
-                            className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
-                          >
-                            {ball}
-                          </div>
-                        </div>
-                      ))}
-                      <div className="ml-auto text-gray-500 font-semibold">=&nbsp;
-                        {recentTwoOvers[previousOver.toString()]?.reduce((sum, ball) => {
-                          const value = parseInt(ball);
-                          return sum + (isNaN(value) ? 0 : value);
-                        }, 0)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
+              <div className="space-y-4">
                 {/* Current Over */}
                 {currentOver >= 0 && (
                   <div className="rounded-lg border border-gray-200 overflow-hidden">
                     <div className="bg-green-100 px-3 py-1 border-b border-gray-200">
                       <span className="text-sm font-semibold text-green-800">This Over: </span>
                     </div>
-                    <div className="flex flex-row-reverse items-center p-2 bg-white">
+                    <div className="p-3 bg-white flex items-center">
                       {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => (
                         <div key={`curr-${idx}`} className="flex items-center mx-1">
                           <div 
-                            className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
+                            className={`w-8 h-8 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
                           >
                             {ball}
                           </div>
                         </div>
-                      ))}
-                      <div className="ml-auto text-gray-500 font-semibold">=&nbsp;
-                        {recentTwoOvers[currentOver.toString()]?.reduce((sum, ball) => {
-                          const value = parseInt(ball);
-                          return sum + (isNaN(value) ? 0 : value);
-                        }, 0)}
+                      )).reverse()}
+                      <div className="ml-auto text-gray-600 font-medium">
+                        = {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Previous Over */}
+                {previousOver >= 0 && (
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-blue-100 px-3 py-1 border-b border-gray-200">
+                      <span className="text-sm font-semibold text-blue-800">Last Over: </span>
+                    </div>
+                    <div className="p-3 bg-white flex items-center">
+                      {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => (
+                        <div key={`prev-${idx}`} className="flex items-center mx-1">
+                          <div 
+                            className={`w-8 h-8 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
+                          >
+                            {ball}
+                          </div>
+                        </div>
+                      )).reverse()}
+                      <div className="ml-auto text-gray-600 font-medium">
+                        = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
                       </div>
                     </div>
                   </div>
