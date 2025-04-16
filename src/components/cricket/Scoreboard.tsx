@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -69,6 +68,7 @@ export default function Scoreboard({
   const [lastOutBatsman, setLastOutBatsman] = useState<{name: string, runs: number, balls: number} | null>(null);
   const [lastWicketTimestamp, setLastWicketTimestamp] = useState<number>(0);
   const { toast } = useToast();
+  const popupTimerRef = useRef<number | null>(null);
   
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
@@ -96,9 +96,33 @@ export default function Scoreboard({
   const activeBatsman2 = batsmen.find(b => b.name === nonStriker);
   const activeBatsmen = [activeBatsman1, activeBatsman2].filter(Boolean);
 
+  const ballsByOver: Record<string, string[]> = {};
+  recentBalls.forEach((ball, index) => {
+    const ballPosition = totalBalls - recentBalls.length + index;
+    const overNumber = Math.floor(ballPosition / 6);
+    if (!ballsByOver[overNumber]) {
+      ballsByOver[overNumber] = [];
+    }
+    ballsByOver[overNumber].push(ball);
+  });
+
+  useEffect(() => {
+    return () => {
+      if (popupTimerRef.current !== null) {
+        window.clearTimeout(popupTimerRef.current);
+        console.log("Cleanup: Cleared popup timer on unmount");
+      }
+    };
+  }, []);
+
   useEffect(() => {
     console.log("Wicket detection running, lastWicketType:", lastWicketType);
     console.log("outPlayers:", outPlayers);
+    
+    if (popupTimerRef.current !== null) {
+      window.clearTimeout(popupTimerRef.current);
+      console.log("Cleared existing popup timer");
+    }
     
     if (lastWicketType && outPlayers.length > 0) {
       const currentTime = Date.now();
@@ -122,16 +146,11 @@ export default function Scoreboard({
           setLastWicketTimestamp(currentTime);
           
           console.log("Setting timeout to hide popup after 10 seconds");
-          const timer = setTimeout(() => {
+          popupTimerRef.current = window.setTimeout(() => {
             console.log("Timeout triggered, hiding popup");
             setShowWicketPopup(false);
+            popupTimerRef.current = null;
           }, 10000);
-          
-          // Clear the timeout when component unmounts or dependencies change
-          return () => {
-            console.log("Clearing timeout");
-            clearTimeout(timer);
-          };
         }
       }
     }
@@ -220,19 +239,40 @@ export default function Scoreboard({
             </div>
           </div>
           
-          {recentBalls.length > 0 && (
+          {Object.keys(ballsByOver).length > 0 && (
             <div className="mb-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-md border-2 border-primary/20">
               <div className="text-sm text-indigo-700 mb-2 font-semibold">Ball by Ball</div>
-              <div className="flex items-center gap-1 overflow-x-auto py-1 px-1">
-                {recentBalls.map((ball, index) => (
-                  <div 
-                    key={index} 
-                    className={`flex-shrink-0 w-8 h-8 rounded-full ${getBallColor(ball)} flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
-                  >
-                    {ball}
+              <div className="space-y-2">
+                {Object.entries(ballsByOver).map(([overNum, balls]) => (
+                  <div key={overNum} className="flex flex-col">
+                    <div className="text-xs font-semibold text-indigo-600 mb-1">
+                      Over {parseInt(overNum) + 1}
+                    </div>
+                    <div className="flex items-center gap-1 overflow-x-auto py-1 px-1">
+                      {balls.map((ball, index) => (
+                        <div 
+                          key={`${overNum}-${index}`} 
+                          className={`flex-shrink-0 w-8 h-8 rounded-full ${getBallColor(ball)} flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
+                        >
+                          {ball}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
+              {recentBalls.length > 0 && (
+                <div className="mt-3 pt-2 border-t border-indigo-100">
+                  <div className="text-xs font-semibold text-indigo-700 mb-1">Last Ball</div>
+                  <div className="flex justify-start">
+                    <div 
+                      className={`w-10 h-10 rounded-full ${getBallColor(recentBalls[recentBalls.length - 1])} flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white`}
+                    >
+                      {recentBalls[recentBalls.length - 1]}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
