@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -7,8 +7,6 @@ import { LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, Award, 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ScorecardProps {
   totalRuns: number;
@@ -67,11 +65,7 @@ export default function Scoreboard({
   retiredHurtPlayers,
   lastWicketType
 }: ScorecardProps) {
-  const [showWicketPopup, setShowWicketPopup] = useState(false);
-  const [lastOutBatsman, setLastOutBatsman] = useState<{name: string, runs: number, balls: number} | null>(null);
-  const [lastWicketTimestamp, setLastWicketTimestamp] = useState<number>(0);
   const { toast } = useToast();
-  const popupTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
@@ -129,67 +123,6 @@ export default function Scoreboard({
   const currentOver = Object.keys(recentTwoOvers)[0] ? parseInt(Object.keys(recentTwoOvers)[0]) : -1;
   const previousOver = Object.keys(recentTwoOvers)[1] ? parseInt(Object.keys(recentTwoOvers)[1]) : -1;
 
-  // Cleanup function for the wicket popup timer
-  const cleanupWicketPopupTimer = () => {
-    if (popupTimerRef.current) {
-      clearTimeout(popupTimerRef.current);
-      popupTimerRef.current = null;
-      console.log("Cleaned up wicket popup timer");
-    }
-  };
-
-  // Clear timer on component unmount
-  useEffect(() => {
-    return () => {
-      cleanupWicketPopupTimer();
-    };
-  }, []);
-
-  // Wicket popup logic
-  useEffect(() => {
-    console.log("Wicket detection running, lastWicketType:", lastWicketType);
-    console.log("outPlayers:", outPlayers);
-    
-    // Clear existing timer if any
-    cleanupWicketPopupTimer();
-    
-    if (lastWicketType && outPlayers.length > 0) {
-      const currentTime = Date.now();
-      console.log("Current time:", currentTime);
-      console.log("Last wicket timestamp:", lastWicketTimestamp);
-      console.log("Time difference:", currentTime - lastWicketTimestamp);
-      
-      if (currentTime - lastWicketTimestamp > 1000) {
-        const lastOut = outPlayers[outPlayers.length - 1];
-        const lastOutStats = batsmen.find(b => b.name === lastOut);
-        console.log("Last out batsman:", lastOut);
-        console.log("Last out stats:", lastOutStats);
-        
-        if (lastOutStats) {
-          setLastOutBatsman({
-            name: lastOutStats.name,
-            runs: lastOutStats.runs,
-            balls: lastOutStats.balls
-          });
-          setShowWicketPopup(true);
-          setLastWicketTimestamp(currentTime);
-          
-          console.log("Setting timeout to hide popup after 10 seconds");
-          popupTimerRef.current = setTimeout(() => {
-            console.log("Timeout triggered, hiding popup");
-            setShowWicketPopup(false);
-          }, 10000);
-        }
-      }
-    }
-  }, [outPlayers, lastWicketType, batsmen, lastWicketTimestamp]);
-
-  // Handle manual popup close
-  const handleCloseWicketPopup = () => {
-    setShowWicketPopup(false);
-    cleanupWicketPopupTimer();
-  };
-
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
     if (ball === '0') return 'bg-gray-300';
@@ -215,21 +148,6 @@ export default function Scoreboard({
   
   return (
     <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden">
-      {/* Wicket Popup - Using Dialog component to ensure it works correctly */}
-      <Dialog open={showWicketPopup} onOpenChange={handleCloseWicketPopup}>
-        <DialogContent className="bg-red-100 rounded-xl border-4 border-red-500 p-6 max-w-md">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-red-700 mb-2">WICKET!</h2>
-            {lastOutBatsman && (
-              <>
-                <p className="text-xl font-semibold">{lastOutBatsman.name} {lastOutBatsman.runs}({lastOutBatsman.balls})</p>
-                <p className="text-lg mt-1">Dismissal: {lastWicketType}</p>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-      
       <CardContent className="space-y-6 p-6">
         <div className="flex items-center justify-center gap-2 mb-4">
           <LineChart className="h-7 w-7 text-primary" />
@@ -296,16 +214,18 @@ export default function Scoreboard({
                       <span className="text-sm font-semibold text-green-800">This Over: </span>
                     </div>
                     <div className="p-3 bg-white flex items-center">
-                      {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => (
-                        <div key={`curr-${idx}`} className="flex items-center mx-1">
-                          <div 
-                            className={`w-8 h-8 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
-                          >
-                            {ball}
+                      <div className="flex flex-row-reverse items-center flex-1">
+                        {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => (
+                          <div key={`curr-${idx}`} className="flex items-center mx-1">
+                            <div 
+                              className={`w-8 h-8 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
+                            >
+                              {ball}
+                            </div>
                           </div>
-                        </div>
-                      )).reverse()}
-                      <div className="ml-auto text-gray-600 font-medium">
+                        ))}
+                      </div>
+                      <div className="ml-2 text-gray-600 font-medium">
                         = {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
                       </div>
                     </div>
@@ -319,16 +239,18 @@ export default function Scoreboard({
                       <span className="text-sm font-semibold text-blue-800">Last Over: </span>
                     </div>
                     <div className="p-3 bg-white flex items-center">
-                      {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => (
-                        <div key={`prev-${idx}`} className="flex items-center mx-1">
-                          <div 
-                            className={`w-8 h-8 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
-                          >
-                            {ball}
+                      <div className="flex flex-row-reverse items-center flex-1">
+                        {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => (
+                          <div key={`prev-${idx}`} className="flex items-center mx-1">
+                            <div 
+                              className={`w-8 h-8 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
+                            >
+                              {ball}
+                            </div>
                           </div>
-                        </div>
-                      )).reverse()}
-                      <div className="ml-auto text-gray-600 font-medium">
+                        ))}
+                      </div>
+                      <div className="ml-2 text-gray-600 font-medium">
                         = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
                       </div>
                     </div>

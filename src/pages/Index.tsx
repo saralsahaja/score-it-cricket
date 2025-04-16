@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -353,15 +352,12 @@ export default function Index() {
   };
 
   const handleApplyCustomSetup = (data: CustomGameData) => {
-    // Calculate total overs and balls
     const totalBallsCount = (data.overs * 6) + data.balls;
     
-    // Set game state from custom setup
     setTotalRuns(data.runs);
     setWickets(data.wickets);
     setTotalBalls(totalBallsCount);
     
-    // Set batsmen
     setBatsmen(data.batsmen.map(b => ({
       name: b.name,
       runs: b.runs,
@@ -370,11 +366,9 @@ export default function Index() {
       sixes: b.sixes
     })));
     
-    // Set current active batsmen
     setStriker(data.striker);
     setNonStriker(data.nonStriker);
     
-    // Set bowlers
     const formattedBowlers = data.bowlers.map(b => ({
       name: b.name,
       runs: b.runs,
@@ -385,17 +379,14 @@ export default function Index() {
     
     setBowlersList(formattedBowlers);
     
-    // Set current bowler
     const currentBowlerData = formattedBowlers.find(b => b.name === data.currentBowler);
     if (currentBowlerData) {
       setBowler(currentBowlerData);
       setCurrentBowler(data.currentBowler);
     }
     
-    // Set out players
     setOutPlayers(data.outPlayers);
     
-    // Move to match control tab
     setActiveTab("control");
     
     toast.success("Custom game setup applied. Game state has been updated.");
