@@ -141,6 +141,8 @@ export default function Scoreboard({
   // Calculate over runs total
   const calculateOverTotal = (balls: string[]) => {
     return balls.reduce((sum, ball) => {
+      if (ball === 'W') return sum;
+      if (ball === 'WD' || ball === 'NB') return sum + 1;
       const value = parseInt(ball);
       return sum + (isNaN(value) ? 0 : value);
     }, 0);
@@ -202,7 +204,7 @@ export default function Scoreboard({
             </div>
           </div>
           
-          {/* Ball by Ball section - Redesigned for single row display */}
+          {/* Ball by Ball section - Single row design with total at the end */}
           {Object.keys(recentTwoOvers).length > 0 && (
             <div className="mb-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
               <div className="text-sm text-indigo-700 mb-3 font-semibold">Ball by Ball</div>
@@ -214,9 +216,9 @@ export default function Scoreboard({
                       <span className="text-sm font-semibold text-green-800">This Over: </span>
                     </div>
                     <div className="p-3 bg-white flex items-center">
-                      <div className="flex flex-row-reverse items-center flex-1">
+                      <div className="flex flex-wrap gap-1">
                         {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => (
-                          <div key={`curr-${idx}`} className="flex items-center mx-1">
+                          <div key={`curr-${idx}`} className="inline-block">
                             <div 
                               className={`w-8 h-8 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
                             >
@@ -225,7 +227,7 @@ export default function Scoreboard({
                           </div>
                         ))}
                       </div>
-                      <div className="ml-2 text-gray-600 font-medium">
+                      <div className="ml-auto text-gray-600 font-medium whitespace-nowrap">
                         = {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
                       </div>
                     </div>
@@ -239,9 +241,9 @@ export default function Scoreboard({
                       <span className="text-sm font-semibold text-blue-800">Last Over: </span>
                     </div>
                     <div className="p-3 bg-white flex items-center">
-                      <div className="flex flex-row-reverse items-center flex-1">
+                      <div className="flex flex-wrap gap-1">
                         {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => (
-                          <div key={`prev-${idx}`} className="flex items-center mx-1">
+                          <div key={`prev-${idx}`} className="inline-block">
                             <div 
                               className={`w-8 h-8 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
                             >
@@ -250,7 +252,7 @@ export default function Scoreboard({
                           </div>
                         ))}
                       </div>
-                      <div className="ml-2 text-gray-600 font-medium">
+                      <div className="ml-auto text-gray-600 font-medium whitespace-nowrap">
                         = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
                       </div>
                     </div>
