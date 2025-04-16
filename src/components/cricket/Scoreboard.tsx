@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,8 @@ import { LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, Award, 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ScorecardProps {
   totalRuns: number;
@@ -68,7 +71,7 @@ export default function Scoreboard({
   const [lastOutBatsman, setLastOutBatsman] = useState<{name: string, runs: number, balls: number} | null>(null);
   const [lastWicketTimestamp, setLastWicketTimestamp] = useState<number>(0);
   const { toast } = useToast();
-  const popupTimerRef = useRef<number | null>(null);
+  const popupTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
@@ -96,31 +99,54 @@ export default function Scoreboard({
   const activeBatsman2 = batsmen.find(b => b.name === nonStriker);
   const activeBatsmen = [activeBatsman1, activeBatsman2].filter(Boolean);
 
-  const ballsByOver: Record<string, string[]> = {};
-  recentBalls.forEach((ball, index) => {
-    const ballPosition = totalBalls - recentBalls.length + index;
-    const overNumber = Math.floor(ballPosition / 6);
-    if (!ballsByOver[overNumber]) {
-      ballsByOver[overNumber] = [];
-    }
-    ballsByOver[overNumber].push(ball);
-  });
+  // Process recent balls to format them by overs (most recent 2 overs only)
+  const processRecentBalls = () => {
+    const recentOvers: { [key: string]: string[] } = {};
+    
+    // Map ball positions to their over numbers
+    recentBalls.forEach((ball, index) => {
+      const ballPosition = totalBalls - recentBalls.length + index;
+      const overNumber = Math.floor(ballPosition / 6);
+      if (!recentOvers[overNumber]) {
+        recentOvers[overNumber] = [];
+      }
+      recentOvers[overNumber].push(ball);
+    });
+    
+    // Get only the last two overs
+    const allOvers = Object.keys(recentOvers).sort((a, b) => parseInt(b) - parseInt(a));
+    const lastTwoOvers = allOvers.slice(0, 2);
+    
+    const result: { [key: string]: string[] } = {};
+    lastTwoOvers.forEach(over => {
+      result[over] = recentOvers[over];
+    });
+    
+    return result;
+  };
+  
+  const recentTwoOvers = processRecentBalls();
+  const currentOver = Object.keys(recentTwoOvers)[0] ? parseInt(Object.keys(recentTwoOvers)[0]) : -1;
+  const previousOver = Object.keys(recentTwoOvers)[1] ? parseInt(Object.keys(recentTwoOvers)[1]) : -1;
 
+  // Clear timer on component unmount
   useEffect(() => {
     return () => {
-      if (popupTimerRef.current !== null) {
-        window.clearTimeout(popupTimerRef.current);
+      if (popupTimerRef.current) {
+        clearTimeout(popupTimerRef.current);
         console.log("Cleanup: Cleared popup timer on unmount");
       }
     };
   }, []);
 
+  // Wicket popup logic
   useEffect(() => {
     console.log("Wicket detection running, lastWicketType:", lastWicketType);
     console.log("outPlayers:", outPlayers);
     
-    if (popupTimerRef.current !== null) {
-      window.clearTimeout(popupTimerRef.current);
+    // Clear existing timer if any
+    if (popupTimerRef.current) {
+      clearTimeout(popupTimerRef.current);
       console.log("Cleared existing popup timer");
     }
     
@@ -146,10 +172,9 @@ export default function Scoreboard({
           setLastWicketTimestamp(currentTime);
           
           console.log("Setting timeout to hide popup after 10 seconds");
-          popupTimerRef.current = window.setTimeout(() => {
+          popupTimerRef.current = setTimeout(() => {
             console.log("Timeout triggered, hiding popup");
             setShowWicketPopup(false);
-            popupTimerRef.current = null;
           }, 10000);
         }
       }
@@ -173,17 +198,20 @@ export default function Scoreboard({
   
   return (
     <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden">
-      {showWicketPopup && lastWicketType && lastOutBatsman && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-          <div className="bg-red-100 rounded-xl p-6 shadow-lg border-4 border-red-500 max-w-md transform animate-bounce">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-red-700 mb-2">WICKET!</h2>
-              <p className="text-xl font-semibold">{lastOutBatsman.name} {lastOutBatsman.runs}({lastOutBatsman.balls})</p>
-              <p className="text-lg mt-1">Dismissal: {lastWicketType}</p>
-            </div>
+      {/* Wicket Popup - Using Dialog component to ensure it works correctly */}
+      <Dialog open={showWicketPopup} onOpenChange={setShowWicketPopup}>
+        <DialogContent className="bg-red-100 rounded-xl border-4 border-red-500 p-6 max-w-md">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-red-700 mb-2">WICKET!</h2>
+            {lastOutBatsman && (
+              <>
+                <p className="text-xl font-semibold">{lastOutBatsman.name} {lastOutBatsman.runs}({lastOutBatsman.balls})</p>
+                <p className="text-lg mt-1">Dismissal: {lastWicketType}</p>
+              </>
+            )}
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
       
       <CardContent className="space-y-6 p-6">
         <div className="flex items-center justify-center gap-2 mb-4">
@@ -239,40 +267,63 @@ export default function Scoreboard({
             </div>
           </div>
           
-          {Object.keys(ballsByOver).length > 0 && (
-            <div className="mb-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-md border-2 border-primary/20">
-              <div className="text-sm text-indigo-700 mb-2 font-semibold">Ball by Ball</div>
-              <div className="space-y-2">
-                {Object.entries(ballsByOver).map(([overNum, balls]) => (
-                  <div key={overNum} className="flex flex-col">
-                    <div className="text-xs font-semibold text-indigo-600 mb-1">
-                      Over {parseInt(overNum) + 1}
+          {/* Ball by Ball section - Redesigned for horizontal display */}
+          {Object.keys(recentTwoOvers).length > 0 && (
+            <div className="mb-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
+              <div className="text-sm text-indigo-700 mb-3 font-semibold">Ball by Ball</div>
+              <div className="grid grid-cols-1 gap-y-4">
+                {/* Previous Over */}
+                {previousOver >= 0 && (
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-blue-100 px-3 py-1 border-b border-gray-200">
+                      <span className="text-sm font-semibold text-blue-800">Last Over: </span>
                     </div>
-                    <div className="flex items-center gap-1 overflow-x-auto py-1 px-1">
-                      {balls.map((ball, index) => (
-                        <div 
-                          key={`${overNum}-${index}`} 
-                          className={`flex-shrink-0 w-8 h-8 rounded-full ${getBallColor(ball)} flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
-                        >
-                          {ball}
+                    <div className="flex flex-row-reverse items-center p-2 bg-white">
+                      {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => (
+                        <div key={`prev-${idx}`} className="flex items-center mx-1">
+                          <div 
+                            className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
+                          >
+                            {ball}
+                          </div>
                         </div>
                       ))}
+                      <div className="ml-auto text-gray-500 font-semibold">=&nbsp;
+                        {recentTwoOvers[previousOver.toString()]?.reduce((sum, ball) => {
+                          const value = parseInt(ball);
+                          return sum + (isNaN(value) ? 0 : value);
+                        }, 0)}
+                      </div>
                     </div>
                   </div>
-                ))}
+                )}
+                
+                {/* Current Over */}
+                {currentOver >= 0 && (
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-green-100 px-3 py-1 border-b border-gray-200">
+                      <span className="text-sm font-semibold text-green-800">This Over: </span>
+                    </div>
+                    <div className="flex flex-row-reverse items-center p-2 bg-white">
+                      {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => (
+                        <div key={`curr-${idx}`} className="flex items-center mx-1">
+                          <div 
+                            className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white`}
+                          >
+                            {ball}
+                          </div>
+                        </div>
+                      ))}
+                      <div className="ml-auto text-gray-500 font-semibold">=&nbsp;
+                        {recentTwoOvers[currentOver.toString()]?.reduce((sum, ball) => {
+                          const value = parseInt(ball);
+                          return sum + (isNaN(value) ? 0 : value);
+                        }, 0)}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              {recentBalls.length > 0 && (
-                <div className="mt-3 pt-2 border-t border-indigo-100">
-                  <div className="text-xs font-semibold text-indigo-700 mb-1">Last Ball</div>
-                  <div className="flex justify-start">
-                    <div 
-                      className={`w-10 h-10 rounded-full ${getBallColor(recentBalls[recentBalls.length - 1])} flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white`}
-                    >
-                      {recentBalls[recentBalls.length - 1]}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
           
