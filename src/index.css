@@ -95,6 +95,7 @@
   }
 }
 
+/* Ball animations */
 @keyframes wicket-animation {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.5); opacity: 0.8; }
@@ -122,6 +123,35 @@
 
 .animate-six {
   animation: six-animation 1.5s ease;
+}
+
+/* Full-page animations */
+.wicket-animation {
+  animation: pulse 2s infinite;
+}
+
+.four-animation {
+  animation: pulse 2s infinite;
+}
+
+.six-animation {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-30px); }
+  60% { transform: translateY(-15px); }
+}
+
+.animate-bounce {
+  animation: bounce 2s ease infinite;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
 }
 
 .theme-toggle {

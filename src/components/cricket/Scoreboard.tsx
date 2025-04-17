@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,9 @@ export default function Scoreboard({
 }: ScorecardProps) {
   const { toast } = useToast();
   const [animatingBalls, setAnimatingBalls] = useState<{[key: string]: string}>({});
+  const [showWicketAnimation, setShowWicketAnimation] = useState(false);
+  const [showFourAnimation, setShowFourAnimation] = useState(false);
+  const [showSixAnimation, setShowSixAnimation] = useState(false);
   
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
@@ -100,10 +104,16 @@ export default function Scoreboard({
       
       if (latestBall === "W") {
         setAnimatingBalls(prev => ({ ...prev, [key]: "animate-wicket" }));
+        setShowWicketAnimation(true);
+        setTimeout(() => setShowWicketAnimation(false), 2000);
       } else if (latestBall === "4") {
         setAnimatingBalls(prev => ({ ...prev, [key]: "animate-boundary" }));
+        setShowFourAnimation(true);
+        setTimeout(() => setShowFourAnimation(false), 2000);
       } else if (latestBall === "6") {
         setAnimatingBalls(prev => ({ ...prev, [key]: "animate-six" }));
+        setShowSixAnimation(true);
+        setTimeout(() => setShowSixAnimation(false), 2000);
       }
       
       // Clear animation after it completes
@@ -173,7 +183,35 @@ export default function Scoreboard({
   };
   
   return (
-    <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden dark:bg-gray-800">
+    <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden dark:bg-gray-800 relative">
+      {/* Full-screen animations */}
+      {showWicketAnimation && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="wicket-animation bg-red-500/30 absolute inset-0 animate-pulse backdrop-blur-sm"></div>
+          <div className="text-9xl font-extrabold text-red-600 animate-bounce shadow-lg">
+            WICKET!
+          </div>
+        </div>
+      )}
+      
+      {showFourAnimation && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="four-animation bg-green-500/30 absolute inset-0 animate-pulse backdrop-blur-sm"></div>
+          <div className="text-9xl font-extrabold text-green-600 animate-bounce shadow-lg">
+            FOUR!
+          </div>
+        </div>
+      )}
+      
+      {showSixAnimation && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="six-animation bg-purple-500/30 absolute inset-0 animate-pulse backdrop-blur-sm"></div>
+          <div className="text-9xl font-extrabold text-purple-600 animate-bounce shadow-lg">
+            SIX!
+          </div>
+        </div>
+      )}
+      
       <CardContent className="space-y-6 p-6">
         <div className="flex items-center justify-center gap-2 mb-4">
           <LineChart className="h-7 w-7 text-primary" />
@@ -240,7 +278,7 @@ export default function Scoreboard({
                       <span className="text-sm font-semibold text-green-800 dark:text-green-300">This Over: </span>
                     </div>
                     <div className="p-3 bg-white dark:bg-gray-900 flex items-center">
-                      <div className="flex flex-nowrap overflow-x-auto gap-1 flex-1">
+                      <div className="flex flex-row flex-nowrap overflow-x-auto gap-2 flex-1">
                         {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => {
                           const uniqueKey = `curr-${idx}-${ball}`;
                           const hasAnimation = Object.keys(animatingBalls).some(key => key.startsWith(`${ball}-`));
@@ -252,7 +290,7 @@ export default function Scoreboard({
                           return (
                             <div key={uniqueKey} className="inline-block flex-shrink-0">
                               <div 
-                                className={`w-8 h-8 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white dark:border-gray-800 ${animationClass}`}
+                                className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white dark:border-gray-800 ${animationClass}`}
                               >
                                 {ball}
                               </div>
@@ -260,7 +298,7 @@ export default function Scoreboard({
                           );
                         })}
                       </div>
-                      <div className="ml-3 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">
+                      <div className="ml-4 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
                         = {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
                       </div>
                     </div>
@@ -274,18 +312,18 @@ export default function Scoreboard({
                       <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Last Over: </span>
                     </div>
                     <div className="p-3 bg-white dark:bg-gray-900 flex items-center">
-                      <div className="flex flex-nowrap overflow-x-auto gap-1 flex-1">
+                      <div className="flex flex-row flex-nowrap overflow-x-auto gap-2 flex-1">
                         {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => (
                           <div key={`prev-${idx}`} className="inline-block flex-shrink-0">
                             <div 
-                              className={`w-8 h-8 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold shadow-md border-2 border-white dark:border-gray-800`}
+                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white dark:border-gray-800`}
                             >
                               {ball}
                             </div>
                           </div>
                         ))}
                       </div>
-                      <div className="ml-3 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">
+                      <div className="ml-4 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
                         = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
                       </div>
                     </div>
