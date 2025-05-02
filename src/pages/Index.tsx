@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -82,6 +81,52 @@ export default function Index() {
   // UI State
   const [activeTab, setActiveTab] = useState("setup");
   
+  // Store game state in sessionStorage to preserve it when navigating
+  useEffect(() => {
+    // Check if we have stored game state in sessionStorage
+    const storedGameState = sessionStorage.getItem('cricketGameState');
+    if (storedGameState) {
+      try {
+        const parsedState = JSON.parse(storedGameState);
+        
+        // Restore all game state
+        setTeamA(parsedState.teamA || []);
+        setTeamB(parsedState.teamB || []);
+        setActiveTeam(parsedState.activeTeam || "A");
+        setTeamAName(parsedState.teamAName || "Team A");
+        setTeamBName(parsedState.teamBName || "Team B");
+        setTeamALogo(parsedState.teamALogo || null);
+        setTeamBLogo(parsedState.teamBLogo || null);
+        
+        setTotalOvers(parsedState.totalOvers || 20);
+        setGameTitle(parsedState.gameTitle || "Live Scoreboard");
+        setTossInfo(parsedState.tossInfo || null);
+        
+        setBatsmen(parsedState.batsmen || []);
+        setBowler(parsedState.bowler || null);
+        setBowlersList(parsedState.bowlersList || []);
+        setStriker(parsedState.striker || null);
+        setNonStriker(parsedState.nonStriker || null);
+        setCurrentBowler(parsedState.currentBowler || null);
+        setIsOverComplete(parsedState.isOverComplete || false);
+        setOutPlayers(parsedState.outPlayers || []);
+        setRetiredHurtPlayers(parsedState.retiredHurtPlayers || []);
+        setLastWicketType(parsedState.lastWicketType || "");
+        
+        setTotalRuns(parsedState.totalRuns || 0);
+        setTotalBalls(parsedState.totalBalls || 0);
+        setWickets(parsedState.wickets || 0);
+        setFirstInningsScore(parsedState.firstInningsScore || 0);
+        setIsSecondInnings(parsedState.isSecondInnings || false);
+        setRecentBalls(parsedState.recentBalls || []);
+        
+        // Don't restore activeTab - leave it at default or admin status
+      } catch (error) {
+        console.error("Error parsing stored game state:", error);
+      }
+    }
+  }, []);
+
   // Check if user is admin on load
   useEffect(() => {
     // Check if user has admin privileges from localStorage
@@ -93,6 +138,25 @@ export default function Index() {
       setActiveTab("scoreboard");
     }
   }, []);
+
+  // Save game state whenever relevant state changes
+  useEffect(() => {
+    const gameState = {
+      teamA, teamB, activeTeam, teamAName, teamBName, teamALogo, teamBLogo,
+      totalOvers, gameTitle, tossInfo,
+      batsmen, bowler, bowlersList, striker, nonStriker, currentBowler,
+      isOverComplete, outPlayers, retiredHurtPlayers, lastWicketType,
+      totalRuns, totalBalls, wickets, firstInningsScore, isSecondInnings, recentBalls
+    };
+    
+    sessionStorage.setItem('cricketGameState', JSON.stringify(gameState));
+  }, [
+    teamA, teamB, activeTeam, teamAName, teamBName, teamALogo, teamBLogo,
+    totalOvers, gameTitle, tossInfo,
+    batsmen, bowler, bowlersList, striker, nonStriker, currentBowler,
+    isOverComplete, outPlayers, retiredHurtPlayers, lastWicketType,
+    totalRuns, totalBalls, wickets, firstInningsScore, isSecondInnings, recentBalls
+  ]);
 
   useEffect(() => {
     const maxBalls = totalOvers * 6;

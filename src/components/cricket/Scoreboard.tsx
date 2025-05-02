@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, 
-  Award, Star, Trophy, Circle, CircleDot
+  Award, Star, Trophy, CircleCheck, CircleDot
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
@@ -81,7 +81,7 @@ export default function Scoreboard({
   const [showLatestBallInfo, setShowLatestBallInfo] = useState(false);
   const [showTotalRuns, setShowTotalRuns] = useState(true);
   
-  // Determine batting and bowling teams
+  // Determine batting and bowling teams based on toss and innings
   let battingTeam = isSecondInnings ? (tossDecision === "bowl" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName)) : 
                                      (tossDecision === "bat" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName));
   let bowlingTeam = battingTeam === teamAName ? teamBName : teamAName;
@@ -93,11 +93,6 @@ export default function Scoreboard({
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
   const oversText = `${overs}.${balls}`;
-  const matchFormat = totalOvers === 20 ? 'T20' : 
-                      totalOvers === 50 ? 'ODI' : 
-                      totalOvers === 10 ? 'T10' : 
-                      totalOvers === 90 ? 'Test' : 
-                      `${totalOvers} overs`;
   
   const topScorer = batsmen.length > 0 
     ? batsmen.reduce((prev, current) => (prev.runs > current.runs) ? prev : current) 
@@ -165,25 +160,22 @@ export default function Scoreboard({
   const processRecentBalls = () => {
     const recentOvers: { [key: string]: string[] } = {};
     
-    // Map ball positions to their over numbers (key by bowler change)
+    // Process all balls without limiting to 6 per over
     let currentOverNumber = Math.floor(totalBalls / 6);
-    let currentOverStart = 0;
+    let ballsSinceLastOverEnd = totalBalls % 6;
+    let currentOverBallCount = 0;
     
     for (let i = 0; i < recentBalls.length; i++) {
+      // Calculate which over this ball belongs to
       const ballPosition = totalBalls - recentBalls.length + i;
       const overNumber = Math.floor(ballPosition / 6);
       
-      // Start a new over if we've changed bowlers or reached a standard over boundary
-      if (overNumber !== currentOverNumber) {
-        currentOverNumber = overNumber;
-        currentOverStart = i;
+      if (!recentOvers[overNumber]) {
+        recentOvers[overNumber] = [];
       }
       
-      if (!recentOvers[currentOverNumber]) {
-        recentOvers[currentOverNumber] = [];
-      }
-      
-      recentOvers[currentOverNumber].push(recentBalls[i]);
+      // Add the ball to its respective over
+      recentOvers[overNumber].push(recentBalls[i]);
     }
     
     // Get only the last two overs
@@ -295,7 +287,7 @@ export default function Scoreboard({
             {/* Always show batting team on the left */}
             <div className="flex items-center gap-2">
               <div className="relative bg-blue-100 dark:bg-blue-900/50 rounded-full p-2 border-2 border-blue-300 dark:border-blue-700">
-                <Avatar className="h-16 w-16 animate-[scale_2s_ease-in-out_infinite]">
+                <Avatar className="h-16 w-16 animate-[pulse_2s_ease-in-out_infinite]">
                   {battingTeamLogo ? (
                     <AvatarImage src={battingTeamLogo} alt={battingTeam} />
                   ) : (
@@ -303,8 +295,7 @@ export default function Scoreboard({
                   )}
                 </Avatar>
                 <div className="absolute -top-2 -right-2 bg-blue-600 text-white p-1 rounded-full">
-                  {/* Replace Bat with acceptable alternative */}
-                  <Award className="h-5 w-5" />
+                  <CircleCheck className="h-5 w-5" />
                 </div>
               </div>
               <div className="font-bold text-2xl text-blue-800 dark:text-blue-300">
@@ -321,9 +312,6 @@ export default function Scoreboard({
                   <div className="text-md text-indigo-700 dark:text-indigo-300 font-semibold flex items-center justify-center">
                     <Clock className="inline-block h-5 w-5 mr-1" />
                     {oversText}/{totalOvers} overs
-                  </div>
-                  <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-1">
-                    {matchFormat} match
                   </div>
                 </div>
               )}
@@ -357,7 +345,6 @@ export default function Scoreboard({
                   )}
                 </Avatar>
                 <div className="absolute -top-2 -right-2 bg-purple-600 text-white p-1 rounded-full">
-                  {/* Replace CricketBall with acceptable alternative */}
                   <CircleDot className="h-5 w-5 animate-spin" />
                 </div>
               </div>
@@ -371,7 +358,7 @@ export default function Scoreboard({
             </div>
           )}
           
-          {/* Ball by Ball section - Improved to show all deliveries and consistent boxes */}
+          {/* Ball by Ball section - Show all balls without limiting to 6 */}
           {Object.keys(recentTwoOvers).length > 0 && (
             <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
               <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
@@ -382,7 +369,7 @@ export default function Scoreboard({
                     <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-semibold text-green-800 dark:text-green-300">Current Over: </span>
                     </div>
-                    <div className="p-3 bg-white dark:bg-gray-900 flex items-center">
+                    <div className="p-3 bg-white dark:bg-gray-900 flex items-center flex-wrap">
                       <div className="flex flex-row flex-wrap gap-2">
                         {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => {
                           const uniqueKey = `curr-${idx}-${ball}`;
@@ -416,7 +403,7 @@ export default function Scoreboard({
                     <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Last Over: </span>
                     </div>
-                    <div className="p-3 bg-white dark:bg-gray-900 flex items-center">
+                    <div className="p-3 bg-white dark:bg-gray-900 flex items-center flex-wrap">
                       <div className="flex flex-row flex-wrap gap-2">
                         {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => (
                           <div key={`prev-${idx}`} className="inline-block flex-shrink-0">
@@ -476,19 +463,25 @@ export default function Scoreboard({
             
             {!isSecondInnings && (
               <>
-                {/* Partnership info instead of "setting target" message */}
+                {/* Enhanced Partnership info with batsmen names */}
                 <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md col-span-3 border-2 border-amber-300 dark:border-amber-700">
                   <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="text-xl font-bold text-amber-700 dark:text-amber-300">
-                      {partnershipRuns} runs
-                      <span className="text-sm font-normal"> from {partnershipBalls} balls</span>
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <span className="font-semibold">{striker || '---'}</span> & 
+                      <span className="font-semibold">{nonStriker || '---'}</span>
                     </div>
-                    <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
-                        style={{ width: `${Math.min(100, (partnershipRuns / Math.max(1, totalRuns)) * 100)}%` }}
-                      ></div>
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="text-xl font-bold text-amber-700 dark:text-amber-300">
+                        {partnershipRuns} runs
+                        <span className="text-sm font-normal"> from {partnershipBalls} balls</span>
+                      </div>
+                      <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
+                          style={{ width: `${Math.min(100, (partnershipRuns / Math.max(1, totalRuns)) * 100)}%` }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -519,7 +512,7 @@ export default function Scoreboard({
                 }} 
                 className="text-white hover:underline bg-blue-700 dark:bg-blue-600 px-3 py-1 rounded-lg text-sm"
               >
-                View All Records
+                View All Details
               </Link>
             </div>
             <CardContent className="p-4 border-3 border-blue-300 dark:border-blue-700 dark:bg-gray-800">
@@ -592,7 +585,7 @@ export default function Scoreboard({
                 }} 
                 className="text-white hover:underline bg-green-700 dark:bg-green-600 px-3 py-1 rounded-lg text-sm"
               >
-                View All Records
+                View All Details
               </Link>
             </div>
             <CardContent className="p-4 border-3 border-green-300 dark:border-green-700 dark:bg-gray-800">
@@ -684,7 +677,7 @@ export default function Scoreboard({
               
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-purple-200 dark:border-purple-800">
                 <h3 className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1 mb-2 text-lg">
-                  <Square className="h-6 w-6 text-purple-800 dark:text-purple-300 fill-purple-800 dark:fill-purple-300" />
+                  <Square className="h-6 w-6 text-purple-800 dark:text-purple-300" />
                   Boundaries
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
