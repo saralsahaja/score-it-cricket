@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,9 @@ import MatchControl from "@/components/cricket/MatchControl";
 import Scoreboard from "@/components/cricket/Scoreboard";
 import { CricketAppHeader } from "@/components/cricket/CricketAppHeader";
 import CustomGameSetup, { CustomGameData } from "@/components/cricket/CustomGameSetup";
+import { useNavigate, useLocation } from "react-router-dom";
+import AdminLogin from "@/components/cricket/AdminLogin";
+import TossForm from "@/components/cricket/TossForm";
 
 interface BatsmanStats {
   name: string;
@@ -28,7 +32,19 @@ interface BowlerStats {
   maidens: number;
 }
 
+export interface TossInfo {
+  winner: string;
+  decision: "bat" | "bowl";
+}
+
 export default function Index() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [showLogin, setShowLogin] = useState<boolean>(false);
+  
+  // Team Management
   const [teamA, setTeamA] = useState<string[]>([]);
   const [teamB, setTeamB] = useState<string[]>([]);
   const [playerName, setPlayerName] = useState("");
@@ -37,9 +53,13 @@ export default function Index() {
   const [teamBName, setTeamBName] = useState("Team B");
   const [teamALogo, setTeamALogo] = useState<string | null>(null);
   const [teamBLogo, setTeamBLogo] = useState<string | null>(null);
+  
+  // Match Settings
   const [totalOvers, setTotalOvers] = useState(20);
   const [gameTitle, setGameTitle] = useState("Live Scoreboard");
-
+  const [tossInfo, setTossInfo] = useState<TossInfo | null>(null);
+  
+  // Match Stats
   const [batsmen, setBatsmen] = useState<BatsmanStats[]>([]);
   const [bowler, setBowler] = useState<BowlerStats | null>(null);
   const [bowlersList, setBowlersList] = useState<BowlerStats[]>([]);
@@ -50,14 +70,29 @@ export default function Index() {
   const [outPlayers, setOutPlayers] = useState<string[]>([]);
   const [retiredHurtPlayers, setRetiredHurtPlayers] = useState<string[]>([]);
   const [lastWicketType, setLastWicketType] = useState<string>("");
-
+  
+  // Score Tracking
   const [totalRuns, setTotalRuns] = useState(0);
   const [totalBalls, setTotalBalls] = useState(0);
   const [wickets, setWickets] = useState(0);
   const [firstInningsScore, setFirstInningsScore] = useState(0);
   const [isSecondInnings, setIsSecondInnings] = useState(false);
   const [recentBalls, setRecentBalls] = useState<string[]>([]);
+  
+  // UI State
   const [activeTab, setActiveTab] = useState("setup");
+  
+  // Check if user is admin on load
+  useEffect(() => {
+    // Check if user has admin privileges from localStorage
+    const adminStatus = localStorage.getItem('cricketAdminStatus');
+    if (adminStatus === 'true') {
+      setIsAdmin(true);
+    } else {
+      // If not admin, force to scoreboard view
+      setActiveTab("scoreboard");
+    }
+  }, []);
 
   useEffect(() => {
     const maxBalls = totalOvers * 6;
@@ -112,6 +147,25 @@ export default function Index() {
     
     toast.success(`${playerName} added to ${activeTeam === "A" ? teamAName : teamBName}`);
     setPlayerName("");
+  };
+
+  const handleLogin = (credentials: { username: string, password: string }) => {
+    // In a real app, this would validate against a server
+    if (credentials.username === "admin" && credentials.password === "admin123") {
+      setIsAdmin(true);
+      localStorage.setItem('cricketAdminStatus', 'true');
+      setShowLogin(false);
+      toast.success("Admin login successful");
+    } else {
+      toast.error("Invalid credentials");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAdmin(false);
+    localStorage.removeItem('cricketAdminStatus');
+    setActiveTab("scoreboard");
+    toast.info("Admin logged out");
   };
 
   const handleSelectBatsman = (player: string, isStriker: boolean) => {
@@ -197,7 +251,7 @@ export default function Index() {
       setTotalBalls(totalBalls + 1);
 
       const ballNotation = runs === 0 ? '0' : runs.toString();
-      setRecentBalls(prev => [...prev.slice(-11), ballNotation]);
+      setRecentBalls(prev => [...prev, ballNotation]);
 
       if (runs % 2 === 1) {
         const temp = striker;
@@ -219,22 +273,22 @@ export default function Index() {
       if (extraType === 'wide') {
         bowlerStats.runs += 1;
         setTotalRuns(totalRuns + 1);
-        setRecentBalls(prev => [...prev.slice(-11), 'WD']);
+        setRecentBalls(prev => [...prev, 'WD']);
         toast.info("Wide ball: +1 run added");
       } 
       else if (extraType === 'noBall') {
         bowlerStats.runs += 1;
         setTotalRuns(totalRuns + 1);
-        setRecentBalls(prev => [...prev.slice(-11), 'NB']);
+        setRecentBalls(prev => [...prev, 'NB']);
         toast.info("No ball: +1 run added");
       } 
       else if (extraType === 'legBye' || extraType === 'overThrow') {
         if (extraType === 'overThrow') {
           strikerStats.runs += runs;
-          setRecentBalls(prev => [...prev.slice(-11), 'OT']);
+          setRecentBalls(prev => [...prev, 'OT']);
           toast.info(`Overthrow: ${runs} runs added`);
         } else {
-          setRecentBalls(prev => [...prev.slice(-11), 'LB']);
+          setRecentBalls(prev => [...prev, 'LB']);
           toast.info(`Leg bye: ${runs} runs added`);
         }
         
@@ -294,7 +348,7 @@ export default function Index() {
     setWickets(wickets + 1);
     setTotalBalls(totalBalls + 1);
     
-    setRecentBalls(prev => [...prev.slice(-11), 'W']);
+    setRecentBalls(prev => [...prev, 'W']);
     
     updateBowlerInList(bowlerStats);
     
@@ -338,17 +392,10 @@ export default function Index() {
       toast.error("Please enter a valid number of overs (1-50)");
     }
   };
-
-  const navigateToRecords = () => {
-    return {
-      batsmen,
-      bowlersList,
-      teamAName,
-      teamBName,
-      outPlayers,
-      retiredHurtPlayers,
-      gameTitle
-    };
+  
+  const handleTossSubmit = (info: TossInfo) => {
+    setTossInfo(info);
+    toast.success(`${info.winner} won the toss and elected to ${info.decision} first`);
   };
 
   const handleApplyCustomSetup = (data: CustomGameData) => {
@@ -403,98 +450,168 @@ export default function Index() {
       <CricketAppHeader />
       
       <main className="container mx-auto py-6 px-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="setup">Team Setup</TabsTrigger>
-            <TabsTrigger value="customSetup">Custom Start</TabsTrigger>
-            <TabsTrigger value="control">Match Control</TabsTrigger>
-            <TabsTrigger value="scoreboard">Scoreboard</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="setup">
-            <TeamSetup 
-              teamA={teamA}
-              teamB={teamB}
-              playerName={playerName}
-              setPlayerName={setPlayerName}
-              activeTeam={activeTeam}
-              setActiveTeam={setActiveTeam}
-              handleAddPlayer={handleAddPlayer}
-              teamAName={teamAName}
-              setTeamAName={setTeamAName}
-              teamBName={teamBName}
-              setTeamBName={setTeamBName}
-              teamALogo={teamALogo}
-              teamBLogo={teamBLogo}
-              handleLogoUpload={handleLogoUpload}
-              totalOvers={totalOvers}
-              handleTotalOversChange={handleTotalOversChange}
-              gameTitle={gameTitle}
-              setGameTitle={setGameTitle}
-            />
-          </TabsContent>
-          
-          <TabsContent value="customSetup">
-            <CustomGameSetup 
-              teamA={teamA}
-              teamB={teamB}
-              applyCustomSetup={handleApplyCustomSetup}
-            />
-          </TabsContent>
-          
-          <TabsContent value="control">
-            <MatchControl 
-              teamA={teamA}
-              teamB={teamB}
-              handleSelectBatsman={handleSelectBatsman}
-              handleSelectBowler={handleSelectBowler}
-              handleAddRun={handleAddRun}
-              handleWicket={handleWicket}
-              handleRetireHurt={handleRetireHurt}
-              striker={striker}
-              nonStriker={nonStriker}
-              currentBowler={currentBowler}
-              isOverComplete={isOverComplete}
-              wickets={wickets}
-              totalOvers={totalOvers}
-              totalBalls={totalBalls}
-              outPlayers={outPlayers}
-              retiredHurtPlayers={retiredHurtPlayers}
-            />
-          </TabsContent>
-          
-          <TabsContent value="scoreboard">
-            <Scoreboard 
-              totalRuns={totalRuns}
-              wickets={wickets}
-              totalBalls={totalBalls}
-              crr={crr}
-              target={target}
-              rrr={rrr}
-              runsLeft={runsLeft}
-              ballsLeft={ballsLeft}
-              batsmen={batsmen}
-              bowler={bowler}
-              striker={striker}
-              nonStriker={nonStriker}
-              teamAName={teamAName}
-              teamBName={teamBName}
-              teamALogo={teamALogo}
-              teamBLogo={teamBLogo}
-              isSecondInnings={isSecondInnings}
-              bowlersList={bowlersList}
-              recentBalls={recentBalls}
-              setTeamAName={setTeamAName}
-              setTeamBName={setTeamBName}
-              totalOvers={totalOvers}
-              gameTitle={gameTitle}
-              outPlayers={outPlayers}
-              retiredHurtPlayers={retiredHurtPlayers}
-              lastWicketType={lastWicketType}
-            />
-          </TabsContent>
-        </Tabs>
+        {/* Admin Login Button - Always visible in top right */}
+        <div className="flex justify-end mb-4">
+          {isAdmin ? (
+            <Button variant="outline" onClick={handleLogout}>
+              Admin Logout
+            </Button>
+          ) : (
+            <Button onClick={() => setShowLogin(true)}>
+              Admin Login
+            </Button>
+          )}
+        </div>
+        
+        {isAdmin ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsTrigger value="setup">Team Setup</TabsTrigger>
+              <TabsTrigger value="customSetup">Custom Start</TabsTrigger>
+              <TabsTrigger value="control">Match Control</TabsTrigger>
+              <TabsTrigger value="scoreboard">Scoreboard</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="setup">
+              <TeamSetup 
+                teamA={teamA}
+                teamB={teamB}
+                playerName={playerName}
+                setPlayerName={setPlayerName}
+                activeTeam={activeTeam}
+                setActiveTeam={setActiveTeam}
+                handleAddPlayer={handleAddPlayer}
+                teamAName={teamAName}
+                setTeamAName={setTeamAName}
+                teamBName={teamBName}
+                setTeamBName={setTeamBName}
+                teamALogo={teamALogo}
+                teamBLogo={teamBLogo}
+                handleLogoUpload={handleLogoUpload}
+                totalOvers={totalOvers}
+                handleTotalOversChange={handleTotalOversChange}
+                gameTitle={gameTitle}
+                setGameTitle={setGameTitle}
+              />
+              
+              {/* Toss Form - Added to Team Setup */}
+              <Card className="mt-6 shadow-md">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold mb-4">Toss Information</h3>
+                  <TossForm 
+                    teamAName={teamAName} 
+                    teamBName={teamBName} 
+                    onSubmit={handleTossSubmit}
+                    currentToss={tossInfo}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="customSetup">
+              <CustomGameSetup 
+                teamA={teamA}
+                teamB={teamB}
+                applyCustomSetup={handleApplyCustomSetup}
+              />
+            </TabsContent>
+            
+            <TabsContent value="control">
+              <MatchControl 
+                teamA={teamA}
+                teamB={teamB}
+                handleSelectBatsman={handleSelectBatsman}
+                handleSelectBowler={handleSelectBowler}
+                handleAddRun={handleAddRun}
+                handleWicket={handleWicket}
+                handleRetireHurt={handleRetireHurt}
+                striker={striker}
+                nonStriker={nonStriker}
+                currentBowler={currentBowler}
+                isOverComplete={isOverComplete}
+                wickets={wickets}
+                totalOvers={totalOvers}
+                totalBalls={totalBalls}
+                outPlayers={outPlayers}
+                retiredHurtPlayers={retiredHurtPlayers}
+              />
+            </TabsContent>
+            
+            <TabsContent value="scoreboard">
+              <Scoreboard 
+                totalRuns={totalRuns}
+                wickets={wickets}
+                totalBalls={totalBalls}
+                crr={crr}
+                target={target}
+                rrr={rrr}
+                runsLeft={runsLeft}
+                ballsLeft={ballsLeft}
+                batsmen={batsmen}
+                bowler={bowler}
+                striker={striker}
+                nonStriker={nonStriker}
+                teamAName={teamAName}
+                teamBName={teamBName}
+                teamALogo={teamALogo}
+                teamBLogo={teamBLogo}
+                isSecondInnings={isSecondInnings}
+                bowlersList={bowlersList}
+                recentBalls={recentBalls}
+                setTeamAName={setTeamAName}
+                setTeamBName={setTeamBName}
+                totalOvers={totalOvers}
+                gameTitle={gameTitle}
+                outPlayers={outPlayers}
+                retiredHurtPlayers={retiredHurtPlayers}
+                lastWicketType={lastWicketType}
+                tossWinner={tossInfo?.winner}
+                tossDecision={tossInfo?.decision}
+              />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          // Public user view - Only scoreboard
+          <Scoreboard
+            totalRuns={totalRuns}
+            wickets={wickets}
+            totalBalls={totalBalls}
+            crr={crr}
+            target={target}
+            rrr={rrr}
+            runsLeft={runsLeft}
+            ballsLeft={ballsLeft}
+            batsmen={batsmen}
+            bowler={bowler}
+            striker={striker}
+            nonStriker={nonStriker}
+            teamAName={teamAName}
+            teamBName={teamBName}
+            teamALogo={teamALogo}
+            teamBLogo={teamBLogo}
+            isSecondInnings={isSecondInnings}
+            bowlersList={bowlersList}
+            recentBalls={recentBalls}
+            setTeamAName={setTeamAName}
+            setTeamBName={setTeamBName}
+            totalOvers={totalOvers}
+            gameTitle={gameTitle}
+            outPlayers={outPlayers}
+            retiredHurtPlayers={retiredHurtPlayers}
+            lastWicketType={lastWicketType}
+            tossWinner={tossInfo?.winner}
+            tossDecision={tossInfo?.decision}
+          />
+        )}
       </main>
+      
+      {/* Admin Login Modal */}
+      <AdminLogin 
+        isOpen={showLogin} 
+        onClose={() => setShowLogin(false)} 
+        onLogin={handleLogin} 
+      />
+      
       <Toaster position="top-center" />
     </div>
   );

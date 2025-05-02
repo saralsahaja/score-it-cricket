@@ -16,7 +16,10 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <ThemeToggle />
+      {/* Make theme toggle more visible */}
+      <div className="theme-toggle fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />

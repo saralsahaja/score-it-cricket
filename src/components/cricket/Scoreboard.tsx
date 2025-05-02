@@ -35,6 +35,8 @@ interface ScorecardProps {
   outPlayers: string[];
   retiredHurtPlayers: string[];
   lastWicketType?: string;
+  tossWinner?: string;
+  tossDecision?: string;
 }
 
 export default function Scoreboard({
@@ -63,7 +65,9 @@ export default function Scoreboard({
   gameTitle,
   outPlayers,
   retiredHurtPlayers,
-  lastWicketType
+  lastWicketType,
+  tossWinner,
+  tossDecision
 }: ScorecardProps) {
   const { toast } = useToast();
   const [animatingBalls, setAnimatingBalls] = useState<{[key: string]: string}>({});
@@ -266,16 +270,23 @@ export default function Scoreboard({
             </div>
           </div>
           
-          {/* Ball by Ball section - FIXED: Single row design with total at the end */}
+          {/* Add toss information */}
+          {tossWinner && tossDecision && (
+            <div className="mb-4 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg text-center text-amber-800 dark:text-amber-200 font-medium">
+              Toss: {tossWinner} won the toss and elected to {tossDecision} first
+            </div>
+          )}
+          
+          {/* Ball by Ball section - FIXED: Single row design with proper labels */}
           {Object.keys(recentTwoOvers).length > 0 && (
             <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
               <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
-              <div className="space-y-4">
+              <div className="space-y-4 flex flex-col md:flex-row gap-4">
                 {/* Current Over */}
                 {currentOver >= 0 && (
-                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden md:flex-1">
                     <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
-                      <span className="text-sm font-semibold text-green-800 dark:text-green-300">This Over: </span>
+                      <span className="text-sm font-semibold text-green-800 dark:text-green-300">Current Over: </span>
                     </div>
                     <div className="p-3 bg-white dark:bg-gray-900 flex items-center">
                       <div className="flex flex-row flex-nowrap overflow-x-auto gap-2 flex-1">
@@ -307,7 +318,7 @@ export default function Scoreboard({
                 
                 {/* Previous Over */}
                 {previousOver >= 0 && (
-                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden md:flex-1">
                     <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Last Over: </span>
                     </div>
