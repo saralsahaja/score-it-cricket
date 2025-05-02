@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, 
-  Award, Star, Trophy, Circle, CircleDot, Maximize, Minimize 
+  Award, Star, Trophy, Circle, CircleDot
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
@@ -78,6 +79,7 @@ export default function Scoreboard({
   const [showSixAnimation, setShowSixAnimation] = useState(false);
   const [latestBall, setLatestBall] = useState<string | null>(null);
   const [showLatestBallInfo, setShowLatestBallInfo] = useState(false);
+  const [showTotalRuns, setShowTotalRuns] = useState(true);
   
   // Determine batting and bowling teams
   let battingTeam = isSecondInnings ? (tossDecision === "bowl" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName)) : 
@@ -137,11 +139,15 @@ export default function Scoreboard({
         setTimeout(() => setShowSixAnimation(false), 2000);
       }
       
-      // Show the latest ball info
+      // Show the latest ball info and hide total runs temporarily
       setLatestBall(latestBall);
       setShowLatestBallInfo(true);
+      setShowTotalRuns(false);
+      
+      // Show total runs again after animation
       setTimeout(() => {
         setShowLatestBallInfo(false);
+        setShowTotalRuns(true);
       }, 3000);
       
       // Clear animation after it completes
@@ -159,15 +165,26 @@ export default function Scoreboard({
   const processRecentBalls = () => {
     const recentOvers: { [key: string]: string[] } = {};
     
-    // Map ball positions to their over numbers
-    recentBalls.forEach((ball, index) => {
-      const ballPosition = totalBalls - recentBalls.length + index;
+    // Map ball positions to their over numbers (key by bowler change)
+    let currentOverNumber = Math.floor(totalBalls / 6);
+    let currentOverStart = 0;
+    
+    for (let i = 0; i < recentBalls.length; i++) {
+      const ballPosition = totalBalls - recentBalls.length + i;
       const overNumber = Math.floor(ballPosition / 6);
-      if (!recentOvers[overNumber]) {
-        recentOvers[overNumber] = [];
+      
+      // Start a new over if we've changed bowlers or reached a standard over boundary
+      if (overNumber !== currentOverNumber) {
+        currentOverNumber = overNumber;
+        currentOverStart = i;
       }
-      recentOvers[overNumber].push(ball);
-    });
+      
+      if (!recentOvers[currentOverNumber]) {
+        recentOvers[currentOverNumber] = [];
+      }
+      
+      recentOvers[currentOverNumber].push(recentBalls[i]);
+    }
     
     // Get only the last two overs
     const allOvers = Object.keys(recentOvers).sort((a, b) => parseInt(b) - parseInt(a));
@@ -295,17 +312,36 @@ export default function Scoreboard({
               </div>
             </div>
             
-            <div className="text-center">
-              <div className="text-6xl font-bold mb-1 bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
-                {totalRuns}/{wickets}
-              </div>
-              <div className="text-md text-indigo-700 dark:text-indigo-300 font-semibold flex items-center justify-center">
-                <Clock className="inline-block h-5 w-5 mr-1" />
-                {oversText}/{totalOvers} overs
-              </div>
-              <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-1">
-                {matchFormat} match
-              </div>
+            <div className="text-center relative h-28 flex items-center justify-center">
+              {showTotalRuns && (
+                <div className="animate-fade-in absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="text-6xl font-bold mb-1 bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
+                    {totalRuns}/{wickets}
+                  </div>
+                  <div className="text-md text-indigo-700 dark:text-indigo-300 font-semibold flex items-center justify-center">
+                    <Clock className="inline-block h-5 w-5 mr-1" />
+                    {oversText}/{totalOvers} overs
+                  </div>
+                  <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-1">
+                    {matchFormat} match
+                  </div>
+                </div>
+              )}
+              
+              {showLatestBallInfo && latestBall && (
+                <div className="absolute inset-0 flex items-center justify-center animate-fade-in">
+                  <div className="bg-gradient-to-r from-blue-500/50 to-purple-500/50 backdrop-blur-sm rounded-lg p-3 shadow-lg border-2 border-white/30">
+                    <div className="text-center">
+                      <div className={`inline-block w-16 h-16 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg border-2 border-white dark:border-gray-800 mb-1`}>
+                        {latestBall}
+                      </div>
+                      <div className="text-lg font-bold text-white dark:text-white">
+                        {getLatestBallDescription()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="flex items-center gap-2">
@@ -334,34 +370,20 @@ export default function Scoreboard({
               Toss: {tossWinner} won the toss and elected to {tossDecision} first
             </div>
           )}
-
-          {/* Latest Ball Animation Panel */}
-          {showLatestBallInfo && latestBall && (
-            <div className="mb-4 bg-gradient-to-r from-blue-500/30 to-purple-500/30 backdrop-blur-sm rounded-lg p-4 shadow-lg border-2 border-white/30 animate-fade-in animate-pulse">
-              <div className="text-center">
-                <div className={`inline-block w-16 h-16 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg border-2 border-white dark:border-gray-800 mb-2`}>
-                  {latestBall}
-                </div>
-                <div className="text-xl font-bold text-white dark:text-white">
-                  {getLatestBallDescription()}
-                </div>
-              </div>
-            </div>
-          )}
           
           {/* Ball by Ball section - Improved to show all deliveries and consistent boxes */}
           {Object.keys(recentTwoOvers).length > 0 && (
             <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
               <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
               <div className="flex flex-row gap-4">
-                {/* Current Over */}
+                {/* Current Over - Show all balls without limiting to 6 */}
                 {currentOver >= 0 && (
                   <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
                     <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-semibold text-green-800 dark:text-green-300">Current Over: </span>
                     </div>
                     <div className="p-3 bg-white dark:bg-gray-900 flex items-center">
-                      <div className="flex flex-row flex-nowrap overflow-x-auto gap-2">
+                      <div className="flex flex-row flex-wrap gap-2">
                         {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => {
                           const uniqueKey = `curr-${idx}-${ball}`;
                           const hasAnimation = Object.keys(animatingBalls).some(key => key.startsWith(`${ball}-`));
@@ -388,14 +410,14 @@ export default function Scoreboard({
                   </div>
                 )}
                 
-                {/* Previous Over */}
+                {/* Previous Over - Show all balls without limiting to 6 */}
                 {previousOver >= 0 && (
                   <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
                     <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Last Over: </span>
                     </div>
                     <div className="p-3 bg-white dark:bg-gray-900 flex items-center">
-                      <div className="flex flex-row flex-nowrap overflow-x-auto gap-2">
+                      <div className="flex flex-row flex-wrap gap-2">
                         {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => (
                           <div key={`prev-${idx}`} className="inline-block flex-shrink-0">
                             <div 
@@ -454,7 +476,7 @@ export default function Scoreboard({
             
             {!isSecondInnings && (
               <>
-                {/* Replace "Setting target" message with partnership info */}
+                {/* Partnership info instead of "setting target" message */}
                 <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md col-span-3 border-2 border-amber-300 dark:border-amber-700">
                   <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
                   <div className="flex items-center justify-center gap-2">
@@ -484,7 +506,19 @@ export default function Scoreboard({
                 <Users className="h-6 w-6" />
                 <h3 className="font-bold text-2xl">Current Batsmen</h3>
               </div>
-              <Link to="/match-records" className="text-white hover:underline bg-blue-700 dark:bg-blue-600 px-3 py-1 rounded-lg text-sm">
+              <Link 
+                to="/match-records" 
+                state={{ 
+                  batsmen, 
+                  bowlersList, 
+                  teamAName, 
+                  teamBName, 
+                  outPlayers, 
+                  retiredHurtPlayers,
+                  gameTitle
+                }} 
+                className="text-white hover:underline bg-blue-700 dark:bg-blue-600 px-3 py-1 rounded-lg text-sm"
+              >
                 View All Records
               </Link>
             </div>
@@ -545,7 +579,19 @@ export default function Scoreboard({
                 <Zap className="h-6 w-6" />
                 <h3 className="font-bold text-2xl">Current Bowler</h3>
               </div>
-              <Link to="/match-records" className="text-white hover:underline bg-green-700 dark:bg-green-600 px-3 py-1 rounded-lg text-sm">
+              <Link 
+                to="/match-records" 
+                state={{ 
+                  batsmen, 
+                  bowlersList, 
+                  teamAName, 
+                  teamBName, 
+                  outPlayers, 
+                  retiredHurtPlayers,
+                  gameTitle
+                }} 
+                className="text-white hover:underline bg-green-700 dark:bg-green-600 px-3 py-1 rounded-lg text-sm"
+              >
                 View All Records
               </Link>
             </div>
