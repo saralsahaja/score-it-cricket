@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, 
-  Award, Star, Trophy, CricketBall, Bat, Maximize, Minimize 
+  Award, Star, Trophy, Circle, CircleDot, Maximize, Minimize 
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
@@ -287,7 +286,8 @@ export default function Scoreboard({
                   )}
                 </Avatar>
                 <div className="absolute -top-2 -right-2 bg-blue-600 text-white p-1 rounded-full">
-                  <Bat className="h-5 w-5" />
+                  {/* Replace Bat with acceptable alternative */}
+                  <Award className="h-5 w-5" />
                 </div>
               </div>
               <div className="font-bold text-2xl text-blue-800 dark:text-blue-300">
@@ -321,7 +321,8 @@ export default function Scoreboard({
                   )}
                 </Avatar>
                 <div className="absolute -top-2 -right-2 bg-purple-600 text-white p-1 rounded-full">
-                  <CricketBall className="h-5 w-5 animate-spin" />
+                  {/* Replace CricketBall with acceptable alternative */}
+                  <CircleDot className="h-5 w-5 animate-spin" />
                 </div>
               </div>
             </div>
@@ -338,7 +339,7 @@ export default function Scoreboard({
           {showLatestBallInfo && latestBall && (
             <div className="mb-4 bg-gradient-to-r from-blue-500/30 to-purple-500/30 backdrop-blur-sm rounded-lg p-4 shadow-lg border-2 border-white/30 animate-fade-in animate-pulse">
               <div className="text-center">
-                <div className={`inline-block w-16 h-16 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg border-4 border-white dark:border-gray-800 mb-2`}>
+                <div className={`inline-block w-16 h-16 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg border-2 border-white dark:border-gray-800 mb-2`}>
                   {latestBall}
                 </div>
                 <div className="text-xl font-bold text-white dark:text-white">
