@@ -81,6 +81,9 @@ export default function Index() {
   // UI State
   const [activeTab, setActiveTab] = useState("setup");
   
+  // Store first innings team info to swap roles
+  const [firstInningsBattingTeam, setFirstInningsBattingTeam] = useState<string | null>(null);
+  
   // Store game state in sessionStorage to preserve it when navigating
   useEffect(() => {
     // Check if we have stored game state in sessionStorage
@@ -119,6 +122,7 @@ export default function Index() {
         setFirstInningsScore(parsedState.firstInningsScore || 0);
         setIsSecondInnings(parsedState.isSecondInnings || false);
         setRecentBalls(parsedState.recentBalls || []);
+        setFirstInningsBattingTeam(parsedState.firstInningsBattingTeam || null);
         
         // Don't restore activeTab - leave it at default or admin status
       } catch (error) {
@@ -146,7 +150,8 @@ export default function Index() {
       totalOvers, gameTitle, tossInfo,
       batsmen, bowler, bowlersList, striker, nonStriker, currentBowler,
       isOverComplete, outPlayers, retiredHurtPlayers, lastWicketType,
-      totalRuns, totalBalls, wickets, firstInningsScore, isSecondInnings, recentBalls
+      totalRuns, totalBalls, wickets, firstInningsScore, isSecondInnings, 
+      recentBalls, firstInningsBattingTeam
     };
     
     sessionStorage.setItem('cricketGameState', JSON.stringify(gameState));
@@ -155,7 +160,8 @@ export default function Index() {
     totalOvers, gameTitle, tossInfo,
     batsmen, bowler, bowlersList, striker, nonStriker, currentBowler,
     isOverComplete, outPlayers, retiredHurtPlayers, lastWicketType,
-    totalRuns, totalBalls, wickets, firstInningsScore, isSecondInnings, recentBalls
+    totalRuns, totalBalls, wickets, firstInningsScore, isSecondInnings, 
+    recentBalls, firstInningsBattingTeam
   ]);
 
   useEffect(() => {
@@ -166,21 +172,54 @@ export default function Index() {
         toast.info("First innings complete! Starting second innings.", {
           duration: 5000,
         });
+        
+        // Store first innings batting team
+        if (tossInfo) {
+          const firstInningsBattingTeamName = tossInfo.decision === "bat" ? tossInfo.winner : 
+            (tossInfo.winner === teamAName ? teamBName : teamAName);
+          setFirstInningsBattingTeam(firstInningsBattingTeamName);
+        }
+        
         setFirstInningsScore(totalRuns);
         setIsSecondInnings(true);
+        
+        // Swap batsmen and bowlers lists before resetting
+        const firstInningsBatsmen = [...batsmen];
+        const firstInningsBowlers = [...bowlersList];
+        
         resetInnings();
+        
+        // Convert first innings bowlers to be the new batsmen (empty stats but keep names)
+        const newBatsmen = firstInningsBowlers.map(bowler => ({
+          name: bowler.name,
+          runs: 0,
+          balls: 0,
+          fours: 0,
+          sixes: 0
+        }));
+        
+        // Convert first innings batsmen to be the new bowlers (empty stats but keep names)
+        const newBowlers = firstInningsBatsmen.map(batsman => ({
+          name: batsman.name,
+          runs: 0,
+          balls: 0,
+          wickets: 0,
+          maidens: 0
+        }));
+        
+        setBatsmen(newBatsmen);
+        setBowlersList(newBowlers);
+        
         setRecentBalls([]);
       }
     }
-  }, [wickets, totalBalls, isSecondInnings, totalOvers]);
+  }, [wickets, totalBalls, isSecondInnings, totalOvers, tossInfo, teamAName, teamBName]);
 
   const resetInnings = () => {
     setTotalRuns(0);
     setTotalBalls(0);
     setWickets(0);
-    setBatsmen([]);
     setBowler(null);
-    setBowlersList([]);
     setStriker(null);
     setNonStriker(null);
     setCurrentBowler(null);
@@ -285,8 +324,19 @@ export default function Index() {
   };
 
   const handleAddRun = (runs: number, extraType?: string) => {
-    if (!striker || !bowler) {
-      toast.error("Please select striker and bowler first");
+    // Block run updates when conditions aren't met
+    if (isOverComplete && !currentBowler) {
+      toast.error("Please select a bowler before adding runs");
+      return;
+    }
+    
+    if (!striker || !nonStriker) {
+      toast.error("Please select both batsmen before adding runs");
+      return;
+    }
+    
+    if (!bowler) {
+      toast.error("Please select a bowler first");
       return;
     }
 
@@ -390,6 +440,7 @@ export default function Index() {
   };
 
   const handleWicket = (wicketType?: string) => {
+    // Block wicket updates when conditions aren't met
     if (!striker || !bowler) {
       toast.error("Please select striker and bowler first");
       return;
@@ -503,6 +554,20 @@ export default function Index() {
     toast.success("Custom game setup applied. Game state has been updated.");
   };
 
+  // Determine batting team based on innings and toss
+  const getBattingTeam = () => {
+    if (!tossInfo) return teamAName;
+    if (!isSecondInnings) {
+      return tossInfo.decision === "bat" ? tossInfo.winner : (tossInfo.winner === teamAName ? teamBName : teamAName);
+    } else {
+      // In second innings, batting team is the opposite of first innings
+      return firstInningsBattingTeam === teamAName ? teamBName : teamAName;
+    }
+  };
+
+  const battingTeam = getBattingTeam();
+  const bowlingTeam = battingTeam === teamAName ? teamBName : teamAName;
+
   const target = isSecondInnings ? firstInningsScore + 1 : 0;
   const crr = totalBalls > 0 ? (totalRuns / (totalBalls / 6)).toFixed(2) : "0.00";
   const ballsLeft = totalOvers * 6 - totalBalls;
@@ -582,8 +647,12 @@ export default function Index() {
             
             <TabsContent value="control">
               <MatchControl 
-                teamA={teamA}
-                teamB={teamB}
+                teamA={isSecondInnings ? 
+                  (battingTeam === teamAName ? teamA : teamB) : 
+                  teamA}
+                teamB={isSecondInnings ? 
+                  (battingTeam === teamBName ? teamB : teamA) : 
+                  teamB}
                 handleSelectBatsman={handleSelectBatsman}
                 handleSelectBowler={handleSelectBowler}
                 handleAddRun={handleAddRun}

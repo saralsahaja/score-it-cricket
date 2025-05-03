@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
-  LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, 
+  LineChart, Target, Clock, TrendingUp, User, Users, 
   Award, Star, Trophy, CircleCheck, CircleDot
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -80,6 +80,8 @@ export default function Scoreboard({
   const [latestBall, setLatestBall] = useState<string | null>(null);
   const [showLatestBallInfo, setShowLatestBallInfo] = useState(false);
   const [showTotalRuns, setShowTotalRuns] = useState(true);
+  // New state for cycling display
+  const [displayInfoType, setDisplayInfoType] = useState<'reqRate' | 'toWin' | 'partnership'>(isSecondInnings ? 'reqRate' : 'partnership');
   
   // Determine batting and bowling teams based on toss and innings
   let battingTeam = isSecondInnings ? (tossDecision === "bowl" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName)) : 
@@ -114,6 +116,24 @@ export default function Scoreboard({
   // Calculate partnership runs
   const partnershipRuns = activeBatsmen.reduce((total, batter) => total + (batter?.runs || 0), 0);
   const partnershipBalls = activeBatsmen.reduce((total, batter) => total + (batter?.balls || 0), 0);
+
+  // Cycle between different information displays
+  useEffect(() => {
+    if (!isSecondInnings) {
+      setDisplayInfoType('partnership');
+      return;
+    }
+    
+    const interval = setInterval(() => {
+      setDisplayInfoType(current => {
+        if (current === 'reqRate') return 'toWin';
+        if (current === 'toWin') return 'partnership';
+        return 'reqRate';
+      });
+    }, 5000); // Change display every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, [isSecondInnings]);
 
   useEffect(() => {
     if (recentBalls.length > 0) {
@@ -286,40 +306,40 @@ export default function Scoreboard({
           <div className="flex items-center justify-between mb-6">
             {/* Always show batting team on the left */}
             <div className="flex items-center gap-2">
-              <div className="relative bg-blue-100 dark:bg-blue-900/50 rounded-full p-2 border-2 border-blue-300 dark:border-blue-700">
-                <Avatar className="h-16 w-16 animate-[pulse_2s_ease-in-out_infinite]">
-                  {battingTeamLogo ? (
-                    <AvatarImage src={battingTeamLogo} alt={battingTeam} />
-                  ) : (
-                    <AvatarFallback className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 font-bold text-2xl">{battingTeam.charAt(0)}</AvatarFallback>
-                  )}
-                </Avatar>
-              </div>
+              <Avatar className="h-16 w-16 animate-[pulse_2s_ease-in-out_infinite] bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-300 dark:border-blue-700 rounded-full">
+                {battingTeamLogo ? (
+                  <AvatarImage src={battingTeamLogo} alt={battingTeam} />
+                ) : (
+                  <AvatarFallback className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 font-bold text-2xl">{battingTeam.charAt(0)}</AvatarFallback>
+                )}
+              </Avatar>
               <div className="font-bold text-2xl text-blue-800 dark:text-blue-300">
                 {battingTeam}
               </div>
             </div>
             
             <div className="text-center relative h-28 flex items-center justify-center">
+              {/* Display total runs/wickets WITH OVERS COUNT */}
               {showTotalRuns && (
                 <div className="animate-fade-in absolute inset-0 flex items-center justify-center">
                   <div className="text-6xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
                     {totalRuns}/{wickets}
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      {oversText} overs
+                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+                      Over: {oversText}
                     </div>
                   </div>
                 </div>
               )}
               
+              {/* Latest ball notification moved to toss area position */}
               {showLatestBallInfo && latestBall && (
-                <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none animate-fade-in">
-                  <div className="bg-gradient-to-r from-blue-500/90 to-purple-500/90 backdrop-blur-sm rounded-lg p-4 shadow-lg border-2 border-white/30 w-full max-w-[600px] mx-auto">
-                    <div className="flex items-center gap-4 justify-between">
-                      <div className={`w-16 h-16 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg border-2 border-white dark:border-gray-800`}>
+                <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none animate-fade-in w-full max-w-[600px]">
+                  <div className="bg-gradient-to-r from-blue-500/90 to-purple-500/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border-2 border-white/30">
+                    <div className="flex items-center gap-2 justify-between">
+                      <div className={`w-12 h-12 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg border-2 border-white dark:border-gray-800`}>
                         {latestBall}
                       </div>
-                      <div className="text-xl font-bold text-white dark:text-white flex-1 text-center">
+                      <div className="text-lg font-bold text-white dark:text-white flex-1 text-center">
                         {getLatestBallDescription()}
                       </div>
                     </div>
@@ -332,34 +352,32 @@ export default function Scoreboard({
               <div className="font-bold text-2xl text-purple-800 dark:text-purple-300">
                 {bowlingTeam}
               </div>
-              <div className="relative bg-purple-100 dark:bg-purple-900/50 rounded-full p-2 border-2 border-purple-300 dark:border-purple-700">
-                <Avatar className="h-16 w-16 animate-[scale_2s_ease-in-out_infinite]">
-                  {bowlingTeamLogo ? (
-                    <AvatarImage src={bowlingTeamLogo} alt={bowlingTeam} />
-                  ) : (
-                    <AvatarFallback className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200 font-bold text-2xl">{bowlingTeam.charAt(0)}</AvatarFallback>
-                  )}
-                </Avatar>
-              </div>
+              <Avatar className="h-16 w-16 animate-[scale_2s_ease-in-out_infinite] bg-purple-100 dark:bg-purple-900/50 border-2 border-purple-300 dark:border-purple-700 rounded-full">
+                {bowlingTeamLogo ? (
+                  <AvatarImage src={bowlingTeamLogo} alt={bowlingTeam} />
+                ) : (
+                  <AvatarFallback className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200 font-bold text-2xl">{bowlingTeam.charAt(0)}</AvatarFallback>
+                )}
+              </Avatar>
             </div>
           </div>
           
-          {/* Add toss information */}
-          {tossWinner && tossDecision && (
-            <div className="mb-4 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg text-center text-amber-800 dark:text-amber-200 font-medium">
-              Toss: {tossWinner} won the toss and elected to {tossDecision} first
-            </div>
-          )}
+          {/* Add toss information - this is where the notification appears now */}
+          <div className="mb-4 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg text-center text-amber-800 dark:text-amber-200 font-medium min-h-[40px]">
+            {tossWinner && tossDecision && !showLatestBallInfo && (
+              <div>Toss: {tossWinner} won the toss and elected to {tossDecision} first</div>
+            )}
+          </div>
           
           {/* Ball by Ball section - Show all balls without limiting to 6 */}
           <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
             <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
             <div className="flex flex-row gap-4">
-              {/* Current Over (previously labeled as "Last Over") - Show all balls without limiting to 6 */}
+              {/* Previous Over (previously labeled as "Last Over") */}
               {previousOver >= 0 && (
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
                   <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-sm font-semibold text-green-800 dark:text-green-300">Last Over: {previousOver + 1}</span>
+                    <span className="text-sm font-semibold text-green-800 dark:text-green-300">Previous Over: {previousOver + 1}</span>
                   </div>
                   <div className="p-3 bg-white dark:bg-gray-900">
                     <div className="flex flex-row flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin">
@@ -379,13 +397,13 @@ export default function Scoreboard({
                       })}
                     </div>
                     <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                      Total: {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
+                      = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
                     </div>
                   </div>
                 </div>
               )}
               
-              {/* Last Over (previously labeled as "Current Over") - Show all balls without limiting to 6 */}
+              {/* Current Over (previously labeled as "Current Over") */}
               {currentOver >= 0 && (
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
                   <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
@@ -414,7 +432,7 @@ export default function Scoreboard({
                       })}
                     </div>
                     <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                      Total: {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
+                      = {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
                     </div>
                   </div>
                 </div>
@@ -431,36 +449,84 @@ export default function Scoreboard({
               </div>
             </div>
             
+            {/* Dynamic section that cycles through different info panels */}
             {isSecondInnings && (
               <>
-                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-green-300 dark:border-green-700">
-                  <div className="text-sm text-green-700 dark:text-green-300 mb-1 font-semibold">Target</div>
-                  <div className="text-2xl font-bold flex items-center justify-center text-green-700 dark:text-green-300">
-                    <Target className="h-5 w-5 mr-1 text-green-500 dark:text-green-400" />
-                    {target}
+                {/* Required run rate section */}
+                {displayInfoType === 'reqRate' && (
+                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-red-300 dark:border-red-700 animate-fade-in">
+                    <div className="text-sm text-red-700 dark:text-red-300 mb-1 font-semibold">Required Run Rate</div>
+                    <div className="flex items-center justify-center">
+                      <div className="text-2xl font-bold text-red-700 dark:text-red-300 flex items-center">
+                        <TrendingUp className="h-5 w-5 mr-1 text-red-500 dark:text-red-400" />
+                        {rrr}
+                      </div>
+                      <span className="mx-2 text-red-600 dark:text-red-400">per over</span>
+                    </div>
                   </div>
-                </div>
+                )}
                 
-                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-red-300 dark:border-red-700">
-                  <div className="text-sm text-red-700 dark:text-red-300 mb-1 font-semibold">Req. RR</div>
-                  <div className="text-2xl font-bold flex items-center justify-center text-red-700 dark:text-red-300">
-                    <TrendingUp className="h-5 w-5 mr-1 text-red-500 dark:text-red-400" />
-                    {rrr}
+                {/* Runs to win section */}
+                {displayInfoType === 'toWin' && (
+                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-purple-300 dark:border-purple-700 animate-fade-in">
+                    <div className="text-sm text-purple-700 dark:text-purple-300 mb-1 font-semibold">To Win</div>
+                    <div className="flex items-center justify-center">
+                      <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                        {runsLeft}
+                      </div>
+                      <span className="mx-2 text-purple-600 dark:text-purple-400">runs needed from</span>
+                      <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                        {ballsLeft}
+                      </div>
+                      <span className="ml-2 text-blue-600 dark:text-blue-400">balls</span>
+                    </div>
                   </div>
-                </div>
+                )}
                 
-                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-purple-300 dark:border-purple-700">
-                  <div className="text-sm text-purple-700 dark:text-purple-300 mb-1 font-semibold">To Win</div>
-                  <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
-                    {runsLeft} off {ballsLeft}
+                {/* Partnership section (shown in second innings as part of cycle) */}
+                {displayInfoType === 'partnership' && (
+                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-amber-300 dark:border-amber-700 animate-fade-in">
+                    <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{striker || '---'}</span> 
+                        <span className="text-xs mx-1">&amp;</span>
+                        <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{nonStriker || '---'}</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="flex gap-1 items-center">
+                          <div className="w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">R</span>
+                          </div>
+                          <div className="text-xl font-bold text-amber-700 dark:text-amber-300">
+                            {partnershipRuns}
+                          </div>
+                        </div>
+                        <span className="text-amber-600 dark:text-amber-400">off</span>
+                        <div className="flex gap-1 items-center">
+                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">B</span>
+                          </div>
+                          <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                            {partnershipBalls}
+                          </div>
+                        </div>
+                        <div className="h-4 w-20 bg-gradient-to-r from-blue-100 to-amber-100 dark:from-blue-900/30 dark:to-amber-900/30 rounded-full overflow-hidden ml-2 border border-gray-200 dark:border-gray-700">
+                          <div 
+                            className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
+                            style={{ width: `${Math.min(100, (partnershipRuns / Math.max(1, totalRuns)) * 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </>
             )}
             
             {!isSecondInnings && (
               <>
-                {/* Enhanced Partnership info with batsmen names and visual elements */}
+                {/* Enhanced Partnership info with batsmen names and visual elements - always shown in first innings */}
                 <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md col-span-3 border-2 border-amber-300 dark:border-amber-700">
                   <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
                   <div className="flex flex-col items-center justify-center">
@@ -589,7 +655,7 @@ export default function Scoreboard({
           <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800">
             <div className="bg-gradient-to-r from-green-600 to-green-800 dark:from-green-800 dark:to-green-900 text-white p-3 flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Zap className="h-6 w-6" />
+                <Award className="h-6 w-6" />
                 <h3 className="font-bold text-2xl">Current Bowler</h3>
               </div>
               <Link 
@@ -703,7 +769,7 @@ export default function Scoreboard({
               
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-purple-200 dark:border-purple-800">
                 <h3 className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1 mb-2 text-lg">
-                  <Square className="h-6 w-6 text-purple-800 dark:text-purple-300" />
+                  <Star className="h-6 w-6 text-purple-800 dark:text-purple-300" />
                   Boundaries
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
