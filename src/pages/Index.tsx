@@ -489,13 +489,16 @@ export default function Index() {
     if (!file) return;
     
     const reader = new FileReader();
-    reader.onload = (e) => {
+    
+    reader.onloadend = () => {
+      const result = reader.result as string;
       if (team === 'A') {
-        setTeamALogo(e.target?.result as string);
+        setTeamALogo(result);
       } else {
-        setTeamBLogo(e.target?.result as string);
+        setTeamBLogo(result);
       }
     };
+    
     reader.readAsDataURL(file);
   };
 
@@ -612,7 +615,7 @@ export default function Index() {
                 handleAddPlayer={handleAddPlayer}
                 teamAName={teamAName}
                 setTeamAName={setTeamAName}
-                teamBName={teamBName}
+                teamBName={setTeamBName}
                 setTeamBName={setTeamBName}
                 teamALogo={teamALogo}
                 teamBLogo={teamBLogo}

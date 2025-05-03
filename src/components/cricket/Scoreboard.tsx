@@ -373,37 +373,7 @@ export default function Scoreboard({
           <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
             <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
             <div className="flex flex-row gap-4">
-              {/* Previous Over (previously labeled as "Last Over") */}
-              {previousOver >= 0 && (
-                <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
-                  <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-sm font-semibold text-green-800 dark:text-green-300">Previous Over: {previousOver + 1}</span>
-                  </div>
-                  <div className="p-3 bg-white dark:bg-gray-900">
-                    <div className="flex flex-row flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin">
-                      {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => {
-                        const uniqueKey = `prev-${idx}-${ball}`;
-                        const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
-                        
-                        return (
-                          <div key={uniqueKey} className="inline-block flex-shrink-0">
-                            <div 
-                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'}`}
-                            >
-                              {ball}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                      = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Current Over (previously labeled as "Current Over") */}
+              {/* Current Over - on the LEFT side now */}
               {currentOver >= 0 && (
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
                   <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
@@ -437,6 +407,36 @@ export default function Scoreboard({
                   </div>
                 </div>
               )}
+              
+              {/* Previous Over - on the RIGHT side now */}
+              {previousOver >= 0 && (
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
+                  <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-sm font-semibold text-green-800 dark:text-green-300">Previous Over: {previousOver + 1}</span>
+                  </div>
+                  <div className="p-3 bg-white dark:bg-gray-900">
+                    <div className="flex flex-row flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin">
+                      {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => {
+                        const uniqueKey = `prev-${idx}-${ball}`;
+                        const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
+                        
+                        return (
+                          <div key={uniqueKey} className="inline-block flex-shrink-0">
+                            <div 
+                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'}`}
+                            >
+                              {ball}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
+                      = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
@@ -449,12 +449,12 @@ export default function Scoreboard({
               </div>
             </div>
             
-            {/* Dynamic section that cycles through different info panels */}
+            {/* Standardized size/shape for all info panels */}
             {isSecondInnings && (
               <>
                 {/* Required run rate section */}
                 {displayInfoType === 'reqRate' && (
-                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-red-300 dark:border-red-700 animate-fade-in">
+                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 h-24 flex flex-col justify-center text-center shadow-md border-2 border-red-300 dark:border-red-700 animate-fade-in">
                     <div className="text-sm text-red-700 dark:text-red-300 mb-1 font-semibold">Required Run Rate</div>
                     <div className="flex items-center justify-center">
                       <div className="text-2xl font-bold text-red-700 dark:text-red-300 flex items-center">
@@ -468,7 +468,7 @@ export default function Scoreboard({
                 
                 {/* Runs to win section */}
                 {displayInfoType === 'toWin' && (
-                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-purple-300 dark:border-purple-700 animate-fade-in">
+                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 h-24 flex flex-col justify-center text-center shadow-md border-2 border-purple-300 dark:border-purple-700 animate-fade-in">
                     <div className="text-sm text-purple-700 dark:text-purple-300 mb-1 font-semibold">To Win</div>
                     <div className="flex items-center justify-center">
                       <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
@@ -485,7 +485,7 @@ export default function Scoreboard({
                 
                 {/* Partnership section (shown in second innings as part of cycle) */}
                 {displayInfoType === 'partnership' && (
-                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-amber-300 dark:border-amber-700 animate-fade-in">
+                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 h-24 flex flex-col justify-center text-center shadow-md border-2 border-amber-300 dark:border-amber-700 animate-fade-in">
                     <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
                     <div className="flex flex-col items-center justify-center">
                       <div className="flex items-center justify-center gap-2 mb-1">
@@ -511,12 +511,6 @@ export default function Scoreboard({
                             {partnershipBalls}
                           </div>
                         </div>
-                        <div className="h-4 w-20 bg-gradient-to-r from-blue-100 to-amber-100 dark:from-blue-900/30 dark:to-amber-900/30 rounded-full overflow-hidden ml-2 border border-gray-200 dark:border-gray-700">
-                          <div 
-                            className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
-                            style={{ width: `${Math.min(100, (partnershipRuns / Math.max(1, totalRuns)) * 100)}%` }}
-                          ></div>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -527,7 +521,7 @@ export default function Scoreboard({
             {!isSecondInnings && (
               <>
                 {/* Enhanced Partnership info with batsmen names and visual elements - always shown in first innings */}
-                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md col-span-3 border-2 border-amber-300 dark:border-amber-700">
+                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 h-24 flex flex-col justify-center text-center shadow-md col-span-3 border-2 border-amber-300 dark:border-amber-700">
                   <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
                   <div className="flex flex-col items-center justify-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
@@ -553,15 +547,6 @@ export default function Scoreboard({
                           {partnershipBalls}
                         </div>
                       </div>
-                      <div className="h-4 w-24 bg-gradient-to-r from-blue-100 to-amber-100 dark:from-blue-900/30 dark:to-amber-900/30 rounded-full overflow-hidden ml-2 border border-gray-200 dark:border-gray-700">
-                        <div 
-                          className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
-                          style={{ width: `${Math.min(100, (partnershipRuns / Math.max(1, totalRuns)) * 100)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                      {(partnershipBalls > 0 ? ((partnershipRuns / partnershipBalls) * 100).toFixed(1) : "0.0")} SR
                     </div>
                   </div>
                 </div>
@@ -722,6 +707,22 @@ export default function Scoreboard({
               )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Ball-by-ball animation area below the bowler section */}
+        <div className="w-full flex justify-center">
+          {latestBall && showLatestBallInfo && (
+            <div className="bg-gradient-to-r from-blue-500/90 to-purple-500/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border-2 border-white/30 w-full max-w-[600px] animate-fade-in">
+              <div className="flex items-center gap-2 justify-between">
+                <div className={`w-12 h-12 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg border-2 border-white dark:border-gray-800`}>
+                  {latestBall}
+                </div>
+                <div className="text-lg font-bold text-white dark:text-white flex-1 text-center">
+                  {getLatestBallDescription()}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         
         <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-primary/30">
