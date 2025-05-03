@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, 
-  Award, Star, Trophy, CircleCheck, CircleDot, Bath, CircleDashedIcon
+  Award, Star, Trophy, CircleCheck, CircleDot
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
@@ -293,9 +294,6 @@ export default function Scoreboard({
                     <AvatarFallback className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 font-bold text-2xl">{battingTeam.charAt(0)}</AvatarFallback>
                   )}
                 </Avatar>
-                <div className="absolute -top-2 -right-2 bg-blue-600 text-white p-1 rounded-full">
-                  <Bath className="h-5 w-5" />
-                </div>
               </div>
               <div className="font-bold text-2xl text-blue-800 dark:text-blue-300">
                 {battingTeam}
@@ -307,18 +305,21 @@ export default function Scoreboard({
                 <div className="animate-fade-in absolute inset-0 flex items-center justify-center">
                   <div className="text-6xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
                     {totalRuns}/{wickets}
+                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      {oversText} overs
+                    </div>
                   </div>
                 </div>
               )}
               
               {showLatestBallInfo && latestBall && (
-                <div className="absolute inset-0 flex items-center justify-center animate-fade-in">
-                  <div className="bg-gradient-to-r from-blue-500/50 to-purple-500/50 backdrop-blur-sm rounded-lg p-3 shadow-lg border-2 border-white/30 w-full max-w-[240px] mx-auto">
-                    <div className="text-center">
-                      <div className={`inline-block w-16 h-16 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg border-2 border-white dark:border-gray-800 mb-1`}>
+                <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none animate-fade-in">
+                  <div className="bg-gradient-to-r from-blue-500/90 to-purple-500/90 backdrop-blur-sm rounded-lg p-4 shadow-lg border-2 border-white/30 w-full max-w-[600px] mx-auto">
+                    <div className="flex items-center gap-4 justify-between">
+                      <div className={`w-16 h-16 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg border-2 border-white dark:border-gray-800`}>
                         {latestBall}
                       </div>
-                      <div className="text-lg font-bold text-white dark:text-white">
+                      <div className="text-xl font-bold text-white dark:text-white flex-1 text-center">
                         {getLatestBallDescription()}
                       </div>
                     </div>
@@ -339,9 +340,6 @@ export default function Scoreboard({
                     <AvatarFallback className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200 font-bold text-2xl">{bowlingTeam.charAt(0)}</AvatarFallback>
                   )}
                 </Avatar>
-                <div className="absolute -top-2 -right-2 bg-purple-600 text-white p-1 rounded-full">
-                  <CircleDashedIcon className="h-5 w-5 animate-spin" />
-                </div>
               </div>
             </div>
           </div>
@@ -353,72 +351,76 @@ export default function Scoreboard({
             </div>
           )}
           
-          {/* Ball by Ball section - Show all balls without limiting to 6 - SWAPPED CURRENT AND LAST OVER LABELS */}
-          {Object.keys(recentTwoOvers).length > 0 && (
-            <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
-              <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
-              <div className="flex flex-row gap-4">
-                {/* SWAPPED: Previous Over is now labeled as "Current Over" - Show all balls without limiting to 6 */}
-                {previousOver >= 0 && (
-                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
-                    <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
-                      <span className="text-sm font-semibold text-green-800 dark:text-green-300">Current Over: </span>
-                    </div>
-                    <div className="p-3 bg-white dark:bg-gray-900 flex items-center flex-wrap">
-                      <div className="flex flex-row flex-wrap gap-2">
-                        {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => {
-                          const uniqueKey = `curr-${idx}-${ball}`;
-                          const hasAnimation = Object.keys(animatingBalls).some(key => key.startsWith(`${ball}-`));
-                          const animationClass = hasAnimation ? 
-                            (ball === "W" ? "animate-wicket" : 
-                             ball === "4" ? "animate-boundary" : 
-                             ball === "6" ? "animate-six" : "") : "";
-                          
-                          return (
-                            <div key={uniqueKey} className="inline-block flex-shrink-0">
-                              <div 
-                                className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white dark:border-gray-800 ${animationClass}`}
-                              >
-                                {ball}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="ml-4 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                        = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
-                      </div>
-                    </div>
+          {/* Ball by Ball section - Show all balls without limiting to 6 */}
+          <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
+            <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
+            <div className="flex flex-row gap-4">
+              {/* Current Over (previously labeled as "Last Over") - Show all balls without limiting to 6 */}
+              {previousOver >= 0 && (
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
+                  <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-sm font-semibold text-green-800 dark:text-green-300">Last Over: {previousOver + 1}</span>
                   </div>
-                )}
-                
-                {/* SWAPPED: Current Over is now labeled as "Last Over" - Show all balls without limiting to 6 */}
-                {currentOver >= 0 && (
-                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
-                    <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
-                      <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Last Over: </span>
-                    </div>
-                    <div className="p-3 bg-white dark:bg-gray-900 flex items-center flex-wrap">
-                      <div className="flex flex-row flex-wrap gap-2">
-                        {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => (
-                          <div key={`prev-${idx}`} className="inline-block flex-shrink-0">
+                  <div className="p-3 bg-white dark:bg-gray-900">
+                    <div className="flex flex-row flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin">
+                      {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => {
+                        const uniqueKey = `prev-${idx}-${ball}`;
+                        const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
+                        
+                        return (
+                          <div key={uniqueKey} className="inline-block flex-shrink-0">
                             <div 
-                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white dark:border-gray-800`}
+                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'}`}
                             >
                               {ball}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                      <div className="ml-4 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                        = {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
-                      </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
+                      Total: {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+              
+              {/* Last Over (previously labeled as "Current Over") - Show all balls without limiting to 6 */}
+              {currentOver >= 0 && (
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
+                  <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Current Over: {currentOver + 1}</span>
+                  </div>
+                  <div className="p-3 bg-white dark:bg-gray-900">
+                    <div className="flex flex-row flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin">
+                      {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => {
+                        const uniqueKey = `curr-${idx}-${ball}`;
+                        const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
+                        const hasAnimation = Object.keys(animatingBalls).some(key => key.startsWith(`${ball}-`));
+                        const animationClass = hasAnimation ? 
+                          (ball === "W" ? "animate-wicket" : 
+                          ball === "4" ? "animate-boundary" : 
+                          ball === "6" ? "animate-six" : "") : "";
+                        
+                        return (
+                          <div key={uniqueKey} className="inline-block flex-shrink-0">
+                            <div 
+                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'} ${animationClass}`}
+                            >
+                              {ball}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
+                      Total: {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
             <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-blue-300 dark:border-blue-700">
@@ -485,7 +487,7 @@ export default function Scoreboard({
                           {partnershipBalls}
                         </div>
                       </div>
-                      <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden ml-2">
+                      <div className="h-4 w-24 bg-gradient-to-r from-blue-100 to-amber-100 dark:from-blue-900/30 dark:to-amber-900/30 rounded-full overflow-hidden ml-2 border border-gray-200 dark:border-gray-700">
                         <div 
                           className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
                           style={{ width: `${Math.min(100, (partnershipRuns / Math.max(1, totalRuns)) * 100)}%` }}
@@ -520,7 +522,13 @@ export default function Scoreboard({
                   teamBName, 
                   outPlayers, 
                   retiredHurtPlayers,
-                  gameTitle
+                  gameTitle,
+                  totalRuns,
+                  wickets,
+                  totalOvers,
+                  totalBalls,
+                  crr,
+                  oversText
                 }} 
                 className="text-white hover:underline bg-blue-700 dark:bg-blue-600 px-3 py-1 rounded-lg text-sm"
               >
@@ -593,7 +601,13 @@ export default function Scoreboard({
                   teamBName, 
                   outPlayers, 
                   retiredHurtPlayers,
-                  gameTitle
+                  gameTitle,
+                  totalRuns,
+                  wickets,
+                  totalOvers,
+                  totalBalls,
+                  crr,
+                  oversText
                 }} 
                 className="text-white hover:underline bg-green-700 dark:bg-green-600 px-3 py-1 rounded-lg text-sm"
               >
