@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, 
-  Award, Star, Trophy, CircleCheck, CircleDot
+  Award, Star, Trophy, CircleCheck, CircleDot, Bat, Ball
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
@@ -295,7 +295,7 @@ export default function Scoreboard({
                   )}
                 </Avatar>
                 <div className="absolute -top-2 -right-2 bg-blue-600 text-white p-1 rounded-full">
-                  <CircleCheck className="h-5 w-5" />
+                  <Bat className="h-5 w-5" />
                 </div>
               </div>
               <div className="font-bold text-2xl text-blue-800 dark:text-blue-300">
@@ -305,20 +305,16 @@ export default function Scoreboard({
             
             <div className="text-center relative h-28 flex items-center justify-center">
               {showTotalRuns && (
-                <div className="animate-fade-in absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="text-6xl font-bold mb-1 bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
+                <div className="animate-fade-in absolute inset-0 flex items-center justify-center">
+                  <div className="text-6xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
                     {totalRuns}/{wickets}
-                  </div>
-                  <div className="text-md text-indigo-700 dark:text-indigo-300 font-semibold flex items-center justify-center">
-                    <Clock className="inline-block h-5 w-5 mr-1" />
-                    {oversText}/{totalOvers} overs
                   </div>
                 </div>
               )}
               
               {showLatestBallInfo && latestBall && (
                 <div className="absolute inset-0 flex items-center justify-center animate-fade-in">
-                  <div className="bg-gradient-to-r from-blue-500/50 to-purple-500/50 backdrop-blur-sm rounded-lg p-3 shadow-lg border-2 border-white/30">
+                  <div className="bg-gradient-to-r from-blue-500/50 to-purple-500/50 backdrop-blur-sm rounded-lg p-3 shadow-lg border-2 border-white/30 w-full max-w-[240px] mx-auto">
                     <div className="text-center">
                       <div className={`inline-block w-16 h-16 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg border-2 border-white dark:border-gray-800 mb-1`}>
                         {latestBall}
@@ -345,7 +341,7 @@ export default function Scoreboard({
                   )}
                 </Avatar>
                 <div className="absolute -top-2 -right-2 bg-purple-600 text-white p-1 rounded-full">
-                  <CircleDot className="h-5 w-5 animate-spin" />
+                  <Ball className="h-5 w-5 animate-spin" />
                 </div>
               </div>
             </div>
@@ -358,20 +354,20 @@ export default function Scoreboard({
             </div>
           )}
           
-          {/* Ball by Ball section - Show all balls without limiting to 6 */}
+          {/* Ball by Ball section - Show all balls without limiting to 6 - SWAPPED CURRENT AND LAST OVER LABELS */}
           {Object.keys(recentTwoOvers).length > 0 && (
             <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
               <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
               <div className="flex flex-row gap-4">
-                {/* Current Over - Show all balls without limiting to 6 */}
-                {currentOver >= 0 && (
+                {/* SWAPPED: Previous Over is now labeled as "Current Over" - Show all balls without limiting to 6 */}
+                {previousOver >= 0 && (
                   <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
                     <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-semibold text-green-800 dark:text-green-300">Current Over: </span>
                     </div>
                     <div className="p-3 bg-white dark:bg-gray-900 flex items-center flex-wrap">
                       <div className="flex flex-row flex-wrap gap-2">
-                        {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => {
+                        {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => {
                           const uniqueKey = `curr-${idx}-${ball}`;
                           const hasAnimation = Object.keys(animatingBalls).some(key => key.startsWith(`${ball}-`));
                           const animationClass = hasAnimation ? 
@@ -391,21 +387,21 @@ export default function Scoreboard({
                         })}
                       </div>
                       <div className="ml-4 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                        = {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
+                        = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
                       </div>
                     </div>
                   </div>
                 )}
                 
-                {/* Previous Over - Show all balls without limiting to 6 */}
-                {previousOver >= 0 && (
+                {/* SWAPPED: Current Over is now labeled as "Last Over" - Show all balls without limiting to 6 */}
+                {currentOver >= 0 && (
                   <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
                     <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Last Over: </span>
                     </div>
                     <div className="p-3 bg-white dark:bg-gray-900 flex items-center flex-wrap">
                       <div className="flex flex-row flex-wrap gap-2">
-                        {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => (
+                        {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => (
                           <div key={`prev-${idx}`} className="inline-block flex-shrink-0">
                             <div 
                               className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white dark:border-gray-800`}
@@ -416,7 +412,7 @@ export default function Scoreboard({
                         ))}
                       </div>
                       <div className="ml-4 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                        = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
+                        = {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
                       </div>
                     </div>
                   </div>
@@ -463,25 +459,42 @@ export default function Scoreboard({
             
             {!isSecondInnings && (
               <>
-                {/* Enhanced Partnership info with batsmen names */}
+                {/* Enhanced Partnership info with batsmen names and visual elements */}
                 <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md col-span-3 border-2 border-amber-300 dark:border-amber-700">
                   <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
                   <div className="flex flex-col items-center justify-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
-                      <span className="font-semibold">{striker || '---'}</span> & 
-                      <span className="font-semibold">{nonStriker || '---'}</span>
+                      <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{striker || '---'}</span> 
+                      <span className="text-xs mx-1">&amp;</span>
+                      <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{nonStriker || '---'}</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                      <div className="text-xl font-bold text-amber-700 dark:text-amber-300">
-                        {partnershipRuns} runs
-                        <span className="text-sm font-normal"> from {partnershipBalls} balls</span>
+                      <div className="flex gap-1 items-center">
+                        <div className="w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">R</span>
+                        </div>
+                        <div className="text-xl font-bold text-amber-700 dark:text-amber-300">
+                          {partnershipRuns}
+                        </div>
                       </div>
-                      <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
+                      <span className="text-amber-600 dark:text-amber-400">off</span>
+                      <div className="flex gap-1 items-center">
+                        <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">B</span>
+                        </div>
+                        <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                          {partnershipBalls}
+                        </div>
+                      </div>
+                      <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden ml-2">
                         <div 
                           className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
                           style={{ width: `${Math.min(100, (partnershipRuns / Math.max(1, totalRuns)) * 100)}%` }}
                         ></div>
                       </div>
+                    </div>
+                    <div className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                      {(partnershipBalls > 0 ? ((partnershipRuns / partnershipBalls) * 100).toFixed(1) : "0.0")} SR
                     </div>
                   </div>
                 </div>

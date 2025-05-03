@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +82,21 @@ export default function MatchControl({
     });
   };
 
+  // Check conditions for blocking run updates
+  const isRunUpdateBlocked = () => {
+    // Block if over is complete and no bowler is selected
+    if (isOverComplete && !currentBowler) {
+      return {blocked: true, message: "Please select a bowler for the new over first"};
+    }
+    
+    // Block if a wicket fell and no new batsman is selected
+    if (wickets > 0 && (!striker || !nonStriker)) {
+      return {blocked: true, message: "Please select a batsman first"};
+    }
+    
+    return {blocked: false, message: ""};
+  };
+
   const currentOver = Math.floor(totalBalls / 6) + 1;
   const remainingOvers = totalOvers - Math.floor(totalBalls / 6);
   const remainingBalls = 6 - (totalBalls % 6);
@@ -104,6 +120,7 @@ export default function MatchControl({
                 ${run === 6 ? 'bg-purple-500 hover:bg-purple-600 text-white' : ''}
               `}
               onClick={() => handleExtraRunsSelect(run, extraType)}
+              disabled={isRunUpdateBlocked().blocked}
             >
               {run}
             </Button>
@@ -115,6 +132,9 @@ export default function MatchControl({
 
   const isPlayerOut = (player: string) => outPlayers.includes(player);
   const isPlayerRetiredHurt = (player: string) => retiredHurtPlayers.includes(player);
+  
+  // Get the block status
+  const blockStatus = isRunUpdateBlocked();
   
   return (
     <Card className="shadow-lg border-2 border-primary/20">
@@ -278,6 +298,14 @@ export default function MatchControl({
               <h3 className="font-bold text-lg">Run Entry</h3>
             </div>
             
+            {/* Show warning if run updates are blocked */}
+            {blockStatus.blocked && (
+              <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg font-medium animate-pulse border border-red-300 flex items-center">
+                <AlertTriangle className="h-5 w-5 mr-2" />
+                {blockStatus.message}
+              </div>
+            )}
+            
             <div className="grid grid-cols-4 md:grid-cols-7 gap-2 mb-4">
               {[0, 1, 2, 3, 4, 6].map((r) => (
                 <Button 
@@ -288,7 +316,7 @@ export default function MatchControl({
                     r === 4 ? 'bg-blue-500 hover:bg-blue-600 text-white' : 
                     r === 6 ? 'bg-purple-500 hover:bg-purple-600 text-white' : ''
                   }`}
-                  disabled={wickets >= 10}
+                  disabled={wickets >= 10 || blockStatus.blocked}
                 >
                   {r}
                 </Button>
@@ -298,7 +326,7 @@ export default function MatchControl({
                   <Button 
                     variant="destructive"
                     className="text-lg font-bold"
-                    disabled={wickets >= 10}
+                    disabled={wickets >= 10 || blockStatus.blocked}
                   >
                     <Slash className="h-4 w-4 mr-1" />
                     W
@@ -351,7 +379,7 @@ export default function MatchControl({
                       variant="outline" 
                       className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
                       onClick={() => handleAddRun(1, 'wide')}
-                      disabled={wickets >= 10}
+                      disabled={wickets >= 10 || blockStatus.blocked}
                     >
                       <Waves className="h-4 w-4 mr-1" />
                       Wide
@@ -368,7 +396,7 @@ export default function MatchControl({
                       variant="outline" 
                       className="bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
                       onClick={() => handleAddRun(1, 'noBall')}
-                      disabled={wickets >= 10}
+                      disabled={wickets >= 10 || blockStatus.blocked}
                     >
                       <AlertTriangle className="h-4 w-4 mr-1" />
                       No Ball
@@ -387,7 +415,7 @@ export default function MatchControl({
                     <Button 
                       variant="outline" 
                       className="bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
-                      disabled={wickets >= 10}
+                      disabled={wickets >= 10 || blockStatus.blocked}
                     >
                       <ArrowUpRight className="h-4 w-4 mr-1" />
                       Overthrow
@@ -406,7 +434,7 @@ export default function MatchControl({
                     <Button 
                       variant="outline" 
                       className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200"
-                      disabled={wickets >= 10}
+                      disabled={wickets >= 10 || blockStatus.blocked}
                     >
                       <LifeBuoy className="h-4 w-4 mr-1" />
                       Leg Bye
