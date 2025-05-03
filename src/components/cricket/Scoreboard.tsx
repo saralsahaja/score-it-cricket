@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   LineChart, Target, Clock, TrendingUp, User, Users, Zap, Square, 
-  Award, Star, Trophy, CircleCheck, CircleDot, Bat, Ball
+  Award, Star, Trophy, CircleCheck, CircleDot, Bath, CircleDashedIcon
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
@@ -295,7 +294,7 @@ export default function Scoreboard({
                   )}
                 </Avatar>
                 <div className="absolute -top-2 -right-2 bg-blue-600 text-white p-1 rounded-full">
-                  <Bat className="h-5 w-5" />
+                  <Bath className="h-5 w-5" />
                 </div>
               </div>
               <div className="font-bold text-2xl text-blue-800 dark:text-blue-300">
@@ -341,7 +340,7 @@ export default function Scoreboard({
                   )}
                 </Avatar>
                 <div className="absolute -top-2 -right-2 bg-purple-600 text-white p-1 rounded-full">
-                  <Ball className="h-5 w-5 animate-spin" />
+                  <CircleDashedIcon className="h-5 w-5 animate-spin" />
                 </div>
               </div>
             </div>
