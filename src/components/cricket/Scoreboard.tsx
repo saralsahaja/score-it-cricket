@@ -80,17 +80,29 @@ export default function Scoreboard({
   const [latestBall, setLatestBall] = useState<string | null>(null);
   const [showLatestBallInfo, setShowLatestBallInfo] = useState(false);
   const [showTotalRuns, setShowTotalRuns] = useState(true);
-  // New state for cycling display
+  // State for cycling display types
   const [displayInfoType, setDisplayInfoType] = useState<'reqRate' | 'toWin' | 'partnership'>(isSecondInnings ? 'reqRate' : 'partnership');
+  // New state for cycling match info
+  const [matchInfoType, setMatchInfoType] = useState<'toss' | 'lastWicket' | 'bestBowler'>('toss');
   
-  // Determine batting and bowling teams based on toss and innings
-  let battingTeam = isSecondInnings ? (tossDecision === "bowl" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName)) : 
-                                     (tossDecision === "bat" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName));
-  let bowlingTeam = battingTeam === teamAName ? teamBName : teamAName;
+  // Determine batting and bowling teams based on innings
+  let battingTeam, bowlingTeam, battingTeamLogo, bowlingTeamLogo;
   
-  // Get batting team logo
-  const battingTeamLogo = battingTeam === teamAName ? teamALogo : teamBLogo;
-  const bowlingTeamLogo = battingTeam === teamAName ? teamBLogo : teamALogo;
+  // In second innings, swap the teams based on toss decision
+  if (isSecondInnings) {
+    // If team that won toss chose to bowl, they bat second
+    battingTeam = tossDecision === "bowl" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName);
+  } else {
+    // First innings - team that won toss bats first if they chose to bat
+    battingTeam = tossDecision === "bat" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName);
+  }
+  
+  // Set the bowling team as the opposite of batting team
+  bowlingTeam = battingTeam === teamAName ? teamBName : teamAName;
+  
+  // Get team logos
+  battingTeamLogo = battingTeam === teamAName ? teamALogo : teamBLogo;
+  bowlingTeamLogo = battingTeam === teamAName ? teamBLogo : teamALogo;
   
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
@@ -134,6 +146,19 @@ export default function Scoreboard({
     
     return () => clearInterval(interval);
   }, [isSecondInnings]);
+  
+  // Cycle between different match info displays (toss, last wicket, best bowler)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMatchInfoType(current => {
+        if (current === 'toss') return 'lastWicket';
+        if (current === 'lastWicket') return 'bestBowler';
+        return 'toss';
+      });
+    }, 4000); // Change match info display every 4 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (recentBalls.length > 0) {
@@ -264,6 +289,38 @@ export default function Scoreboard({
     }
   };
   
+  // Get match info to display in the cycling animation
+  const getMatchInfoContent = () => {
+    switch (matchInfoType) {
+      case 'toss':
+        return tossWinner && tossDecision ? (
+          <div className="text-amber-800 dark:text-amber-200">
+            Toss: {tossWinner} won the toss and elected to {tossDecision} first
+          </div>
+        ) : (
+          <div className="text-amber-800 dark:text-amber-200">Match in progress</div>
+        );
+      case 'lastWicket':
+        return lastWicketType && outPlayers.length > 0 ? (
+          <div className="text-red-800 dark:text-red-200">
+            Last Wicket: {outPlayers[outPlayers.length-1]} ({lastWicketType})
+          </div>
+        ) : (
+          <div className="text-amber-800 dark:text-amber-200">No wickets yet</div>
+        );
+      case 'bestBowler':
+        return bestBowler ? (
+          <div className="text-green-800 dark:text-green-200">
+            Best Bowler: {bestBowler.name} ({bestBowler.wickets}/{bestBowler.runs})
+          </div>
+        ) : (
+          <div className="text-amber-800 dark:text-amber-200">Bowling stats pending</div>
+        );
+      default:
+        return <div className="text-amber-800 dark:text-amber-200">Match in progress</div>;
+    }
+  };
+  
   return (
     <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden dark:bg-gray-800 relative">
       {/* Full-screen animations */}
@@ -330,22 +387,6 @@ export default function Scoreboard({
                   </div>
                 </div>
               )}
-              
-              {/* Latest ball notification moved to toss area position */}
-              {showLatestBallInfo && latestBall && (
-                <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none animate-fade-in w-full max-w-[600px]">
-                  <div className="bg-gradient-to-r from-blue-500/90 to-purple-500/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border-2 border-white/30">
-                    <div className="flex items-center gap-2 justify-between">
-                      <div className={`w-12 h-12 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg border-2 border-white dark:border-gray-800`}>
-                        {latestBall}
-                      </div>
-                      <div className="text-lg font-bold text-white dark:text-white flex-1 text-center">
-                        {getLatestBallDescription()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
             
             <div className="flex items-center gap-2">
@@ -362,18 +403,16 @@ export default function Scoreboard({
             </div>
           </div>
           
-          {/* Add toss information - this is where the notification appears now */}
-          <div className="mb-4 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg text-center text-amber-800 dark:text-amber-200 font-medium min-h-[40px]">
-            {tossWinner && tossDecision && !showLatestBallInfo && (
-              <div>Toss: {tossWinner} won the toss and elected to {tossDecision} first</div>
-            )}
+          {/* Add match information cycling display */}
+          <div className="mb-4 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg text-center font-medium min-h-[40px] animate-fade-in">
+            {getMatchInfoContent()}
           </div>
           
           {/* Ball by Ball section - Show all balls without limiting to 6 */}
           <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
             <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
             <div className="flex flex-row gap-4">
-              {/* Current Over - on the LEFT side now */}
+              {/* Current Over - on the LEFT side */}
               {currentOver >= 0 && (
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
                   <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
@@ -384,16 +423,11 @@ export default function Scoreboard({
                       {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => {
                         const uniqueKey = `curr-${idx}-${ball}`;
                         const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
-                        const hasAnimation = Object.keys(animatingBalls).some(key => key.startsWith(`${ball}-`));
-                        const animationClass = hasAnimation ? 
-                          (ball === "W" ? "animate-wicket" : 
-                          ball === "4" ? "animate-boundary" : 
-                          ball === "6" ? "animate-six" : "") : "";
                         
                         return (
                           <div key={uniqueKey} className="inline-block flex-shrink-0">
                             <div 
-                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'} ${animationClass}`}
+                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'}`}
                             >
                               {ball}
                             </div>
@@ -408,7 +442,7 @@ export default function Scoreboard({
                 </div>
               )}
               
-              {/* Previous Over - on the RIGHT side now */}
+              {/* Previous Over - on the RIGHT side */}
               {previousOver >= 0 && (
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
                   <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
@@ -710,7 +744,7 @@ export default function Scoreboard({
         </div>
 
         {/* Ball-by-ball animation area below the bowler section */}
-        <div className="w-full flex justify-center">
+        <div className="w-full flex justify-center mt-4">
           {latestBall && showLatestBallInfo && (
             <div className="bg-gradient-to-r from-blue-500/90 to-purple-500/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border-2 border-white/30 w-full max-w-[600px] animate-fade-in">
               <div className="flex items-center gap-2 justify-between">

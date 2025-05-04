@@ -89,6 +89,11 @@ export default function MatchControl({
       return {blocked: true, message: "Please select a bowler for the new over first"};
     }
     
+    // Block if no bowler is selected at all
+    if (!currentBowler) {
+      return {blocked: true, message: "Please select a bowler first"};
+    }
+    
     // Block if a wicket fell and no new batsman is selected
     if (wickets > 0 && (!striker || !nonStriker)) {
       return {blocked: true, message: "Please select a batsman first"};
