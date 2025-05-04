@@ -615,7 +615,7 @@ export default function Index() {
                 handleAddPlayer={handleAddPlayer}
                 teamAName={teamAName}
                 setTeamAName={setTeamAName}
-                teamBName={setTeamBName}
+                teamBName={teamBName}
                 setTeamBName={setTeamBName}
                 teamALogo={teamALogo}
                 teamBLogo={teamBLogo}
