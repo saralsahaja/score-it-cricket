@@ -35,33 +35,54 @@ export default function BallByBallDisplay({
     }
   }, [recentBalls.length]);
 
-  // Format balls for display
+  // Format balls for display with consistent styling
+  const getBallClassName = (ball: string) => {
+    let className = "w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm";
+    
+    // Style based on ball type
+    if (ball === 'W') {
+      className += " bg-red-500 text-white";
+    } else if (ball === '4') {
+      className += " bg-blue-500 text-white";
+    } else if (ball === '6') {
+      className += " bg-purple-500 text-white";
+    } else if (ball === 'WD' || ball === 'NB') {
+      className += " bg-yellow-400 text-yellow-800";
+    } else if (ball === 'LB' || ball === 'OT') {
+      className += " bg-green-500 text-white";
+    } else {
+      className += " bg-gray-200 text-gray-800";
+    }
+    
+    return className;
+  };
+
+  // Get current over ball display with proper numbering
   const getCurrentOverDisplay = () => {
     // Only show the balls for the current over
     return recentBalls.slice(-currentBall).map((ball, index) => {
-      let className = "w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm";
-      
-      // Style based on ball type
-      if (ball === 'W') {
-        className += " bg-red-500 text-white";
-      } else if (ball === '4') {
-        className += " bg-blue-500 text-white";
-      } else if (ball === '6') {
-        className += " bg-purple-500 text-white";
-      } else if (ball === 'WD' || ball === 'NB') {
-        className += " bg-yellow-400 text-yellow-800";
-      } else if (ball === 'LB' || ball === 'OT') {
-        className += " bg-green-500 text-white";
-      } else {
-        className += " bg-gray-200 text-gray-800";
-      }
-      
+      const ballNumber = index + 1;
       return (
-        <div key={index} className={className}>
-          {ball}
+        <div key={index} className="flex flex-col items-center">
+          <div className={getBallClassName(ball)}>
+            {ball}
+          </div>
+          <span className="text-xs text-muted-foreground mt-1">{currentOver}.{ballNumber}</span>
         </div>
       );
     });
+  };
+
+  // Get previous over ball display
+  const getPreviousOverDisplay = () => {
+    return previousOverBalls.map((ball, index) => (
+      <div key={index} className="flex flex-col items-center">
+        <div className={getBallClassName(ball)}>
+          {ball}
+        </div>
+        <span className="text-xs text-muted-foreground mt-1">{currentOver > 1 ? currentOver - 1 : '-'}.{index + 1}</span>
+      </div>
+    ));
   };
 
   return (
@@ -112,31 +133,8 @@ export default function BallByBallDisplay({
                   <Badge className="bg-blue-600">{previousOverRuns} runs</Badge>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {previousOverBalls.length > 0 ? (
-                    previousOverBalls.map((ball, index) => {
-                      let className = "w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm";
-                      
-                      if (ball === 'W') {
-                        className += " bg-red-500 text-white";
-                      } else if (ball === '4') {
-                        className += " bg-blue-500 text-white";
-                      } else if (ball === '6') {
-                        className += " bg-purple-500 text-white";
-                      } else if (ball === 'WD' || ball === 'NB') {
-                        className += " bg-yellow-400 text-yellow-800";
-                      } else if (ball === 'LB' || ball === 'OT') {
-                        className += " bg-green-500 text-white";
-                      } else {
-                        className += " bg-gray-200 text-gray-800";
-                      }
-                      
-                      return (
-                        <div key={index} className={className}>
-                          {ball}
-                        </div>
-                      );
-                    })
-                  ) : (
+                  {getPreviousOverDisplay()}
+                  {previousOverBalls.length === 0 && (
                     <div className="text-center w-full text-sm text-muted-foreground">
                       No previous over data
                     </div>
