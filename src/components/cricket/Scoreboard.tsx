@@ -85,27 +85,16 @@ export default function Scoreboard({
   // New state for cycling match info
   const [matchInfoType, setMatchInfoType] = useState<'toss' | 'lastWicket' | 'bestBowler'>('toss');
   
-  // Determine batting and bowling teams based on innings and toss
+  // Determine batting and bowling teams based on innings
   let battingTeam, bowlingTeam, battingTeamLogo, bowlingTeamLogo;
   
-  if (tossDecision && tossWinner) {
-    // In second innings, the team that batted first now bowls, and vice versa
-    if (isSecondInnings) {
-      // Check if the toss winner chose to bat first
-      if (tossDecision === "bat") {
-        // Toss winner batted first, now they bowl
-        battingTeam = tossWinner === teamAName ? teamBName : teamAName;
-      } else {
-        // Toss winner bowled first, now they bat
-        battingTeam = tossWinner;
-      }
-    } else {
-      // First innings - team that won toss bats first if they chose to bat
-      battingTeam = tossDecision === "bat" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName);
-    }
+  // In second innings, swap the teams based on toss decision
+  if (isSecondInnings) {
+    // If team that won toss chose to bowl, they bat second
+    battingTeam = tossDecision === "bowl" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName);
   } else {
-    // Default fallback if toss info is not available
-    battingTeam = teamAName;
+    // First innings - team that won toss bats first if they chose to bat
+    battingTeam = tossDecision === "bat" ? tossWinner : (tossWinner === teamAName ? teamBName : teamAName);
   }
   
   // Set the bowling team as the opposite of batting team
@@ -118,11 +107,6 @@ export default function Scoreboard({
   const overs = Math.floor(totalBalls / 6);
   const balls = totalBalls % 6;
   const oversText = `${overs}.${balls}`;
-  
-  // Current over number (based on balls completed plus the current ball)
-  const currentOverNumber = Math.floor(totalBalls / 6) + 1;
-  // Previous over number
-  const previousOverNumber = currentOverNumber - 1;
   
   const topScorer = batsmen.length > 0 
     ? batsmen.reduce((prev, current) => (prev.runs > current.runs) ? prev : current) 
@@ -217,52 +201,43 @@ export default function Scoreboard({
     }
   }, [recentBalls]);
 
-  // Process recent balls to format them by overs
+  // Process recent balls to format them by overs (all balls including extras)
   const processRecentBalls = () => {
-    // Structure to hold balls of current and previous over
-    let currentOverBalls: string[] = [];
-    let previousOverBalls: string[] = [];
+    const recentOvers: { [key: string]: string[] } = {};
     
-    // Current over is the one currently being played (partial)
-    const currentOver = Math.floor(totalBalls / 6);
-    // Previous over is the last completed over
-    const previousOver = currentOver > 0 ? currentOver - 1 : -1;
+    // Process all balls without limiting to 6 per over
+    let currentOverNumber = Math.floor(totalBalls / 6);
+    let ballsSinceLastOverEnd = totalBalls % 6;
+    let currentOverBallCount = 0;
     
-    // Count balls in the current over (should be less than 6)
-    const ballsInCurrentOver = totalBalls % 6;
-    
-    // Group the balls by over
-    let ballsProcessed = 0;
-    
-    // Process balls for current over (only balls that have been played in this over)
-    if (ballsInCurrentOver > 0 && recentBalls.length > 0) {
-      // Get the last 'ballsInCurrentOver' balls for current over
-      currentOverBalls = recentBalls.slice(-ballsInCurrentOver);
-      ballsProcessed += ballsInCurrentOver;
-    }
-    
-    // If we have a previous over and there are more balls in recentBalls
-    if (previousOver >= 0 && recentBalls.length > ballsProcessed) {
-      // Get up to 6 balls for the previous over
-      const remainingBalls = Math.min(6, recentBalls.length - ballsProcessed);
-      previousOverBalls = recentBalls.slice(-ballsInCurrentOver - remainingBalls, -ballsInCurrentOver);
-    }
-    
-    return {
-      currentOver: {
-        number: currentOver,
-        balls: currentOverBalls,
-        displayNumber: currentOverNumber
-      },
-      previousOver: {
-        number: previousOver,
-        balls: previousOverBalls,
-        displayNumber: previousOverNumber
+    for (let i = 0; i < recentBalls.length; i++) {
+      // Calculate which over this ball belongs to
+      const ballPosition = totalBalls - recentBalls.length + i;
+      const overNumber = Math.floor(ballPosition / 6);
+      
+      if (!recentOvers[overNumber]) {
+        recentOvers[overNumber] = [];
       }
-    };
+      
+      // Add the ball to its respective over
+      recentOvers[overNumber].push(recentBalls[i]);
+    }
+    
+    // Get only the last two overs
+    const allOvers = Object.keys(recentOvers).sort((a, b) => parseInt(b) - parseInt(a));
+    const lastTwoOvers = allOvers.slice(0, 2);
+    
+    const result: { [key: string]: string[] } = {};
+    lastTwoOvers.forEach(over => {
+      result[over] = recentOvers[over];
+    });
+    
+    return result;
   };
   
-  const recentOvers = processRecentBalls();
+  const recentTwoOvers = processRecentBalls();
+  const currentOver = Object.keys(recentTwoOvers)[0] ? parseInt(Object.keys(recentTwoOvers)[0]) : -1;
+  const previousOver = Object.keys(recentTwoOvers)[1] ? parseInt(Object.keys(recentTwoOvers)[1]) : -1;
 
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
@@ -433,47 +408,49 @@ export default function Scoreboard({
             {getMatchInfoContent()}
           </div>
           
-          {/* Ball by Ball section - Updated to show Current Over and Previous Over correctly */}
+          {/* Ball by Ball section - Show all balls without limiting to 6 */}
           <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
             <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
             <div className="flex flex-row gap-4">
               {/* Current Over - on the LEFT side */}
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
-                <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Current Over: {recentOvers.currentOver.displayNumber}</span>
-                </div>
-                <div className="p-3 bg-white dark:bg-gray-900">
-                  <div className="flex flex-row flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin">
-                    {recentOvers.currentOver.balls.map((ball, idx) => {
-                      const uniqueKey = `curr-${idx}-${ball}`;
-                      const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
-                      
-                      return (
-                        <div key={uniqueKey} className="inline-block flex-shrink-0">
-                          <div 
-                            className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'}`}
-                          >
-                            {ball}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                    = {calculateOverTotal(recentOvers.currentOver.balls)}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Previous Over - on the RIGHT side */}
-              {recentOvers.previousOver.number >= 0 && (
+              {currentOver >= 0 && (
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
-                  <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-sm font-semibold text-green-800 dark:text-green-300">Previous Over: {recentOvers.previousOver.displayNumber}</span>
+                  <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Current Over: {currentOver + 1}</span>
                   </div>
                   <div className="p-3 bg-white dark:bg-gray-900">
                     <div className="flex flex-row flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin">
-                      {recentOvers.previousOver.balls.map((ball, idx) => {
+                      {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => {
+                        const uniqueKey = `curr-${idx}-${ball}`;
+                        const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
+                        
+                        return (
+                          <div key={uniqueKey} className="inline-block flex-shrink-0">
+                            <div 
+                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'}`}
+                            >
+                              {ball}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
+                      = {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Previous Over - on the RIGHT side */}
+              {previousOver >= 0 && (
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
+                  <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-sm font-semibold text-green-800 dark:text-green-300">Previous Over: {previousOver + 1}</span>
+                  </div>
+                  <div className="p-3 bg-white dark:bg-gray-900">
+                    <div className="flex flex-row flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin">
+                      {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => {
                         const uniqueKey = `prev-${idx}-${ball}`;
                         const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
                         
@@ -489,7 +466,7 @@ export default function Scoreboard({
                       })}
                     </div>
                     <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                      = {calculateOverTotal(recentOvers.previousOver.balls)}
+                      = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
                     </div>
                   </div>
                 </div>
