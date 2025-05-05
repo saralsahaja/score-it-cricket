@@ -201,44 +201,6 @@ export default function Scoreboard({
     }
   }, [recentBalls]);
 
-  // Process recent balls to format them by overs (all balls including extras)
-  const processRecentBalls = () => {
-    const recentOvers: { [key: string]: string[] } = {};
-    
-    // Process all balls without limiting to 6 per over
-    let currentOverNumber = Math.floor(totalBalls / 6);
-    let ballsSinceLastOverEnd = totalBalls % 6;
-    let currentOverBallCount = 0;
-    
-    for (let i = 0; i < recentBalls.length; i++) {
-      // Calculate which over this ball belongs to
-      const ballPosition = totalBalls - recentBalls.length + i;
-      const overNumber = Math.floor(ballPosition / 6);
-      
-      if (!recentOvers[overNumber]) {
-        recentOvers[overNumber] = [];
-      }
-      
-      // Add the ball to its respective over
-      recentOvers[overNumber].push(recentBalls[i]);
-    }
-    
-    // Get only the last two overs
-    const allOvers = Object.keys(recentOvers).sort((a, b) => parseInt(b) - parseInt(a));
-    const lastTwoOvers = allOvers.slice(0, 2);
-    
-    const result: { [key: string]: string[] } = {};
-    lastTwoOvers.forEach(over => {
-      result[over] = recentOvers[over];
-    });
-    
-    return result;
-  };
-  
-  const recentTwoOvers = processRecentBalls();
-  const currentOver = Object.keys(recentTwoOvers)[0] ? parseInt(Object.keys(recentTwoOvers)[0]) : -1;
-  const previousOver = Object.keys(recentTwoOvers)[1] ? parseInt(Object.keys(recentTwoOvers)[1]) : -1;
-
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
     if (ball === '0') return 'bg-gray-300 dark:bg-gray-600';
@@ -252,16 +214,6 @@ export default function Scoreboard({
     if (ball === 'LB') return 'bg-indigo-400 dark:bg-indigo-600';
     if (ball === 'OT') return 'bg-pink-400 dark:bg-pink-600';
     return 'bg-gray-200 dark:bg-gray-700';
-  };
-
-  // Calculate over runs total
-  const calculateOverTotal = (balls: string[]) => {
-    return balls.reduce((sum, ball) => {
-      if (ball === 'W') return sum;
-      if (ball === 'WD' || ball === 'NB') return sum + 1;
-      const value = parseInt(ball);
-      return sum + (isNaN(value) ? 0 : value);
-    }, 0);
   };
 
   const getLatestBallDescription = () => {
@@ -319,6 +271,40 @@ export default function Scoreboard({
       default:
         return <div className="text-amber-800 dark:text-amber-200">Match in progress</div>;
     }
+  };
+
+  // Render the last 12 balls in the ball-by-ball display
+  const renderLastTwelveBalls = () => {
+    // Get the last 12 balls or fewer if not available
+    const last12Balls = recentBalls.slice(-12);
+    
+    return (
+      <div className="flex flex-row flex-wrap gap-2 justify-start">
+        {last12Balls.map((ball, idx) => {
+          const isLatest = idx === last12Balls.length - 1;
+          const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
+          
+          return (
+            <div key={`ball-${idx}`} className="inline-block flex-shrink-0">
+              <div 
+                className={`
+                  w-10 h-10 
+                  ${getBallColor(ball)} 
+                  rounded-full 
+                  flex items-center justify-center 
+                  text-white font-bold text-lg 
+                  shadow-lg border-2 
+                  ${isLatest ? 'ring-2 ring-offset-2 ring-white dark:ring-offset-gray-800' : ''}
+                  ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'}
+                `}
+              >
+                {ball}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
   
   return (
@@ -387,6 +373,22 @@ export default function Scoreboard({
                   </div>
                 </div>
               )}
+              
+              {/* Latest ball animation in total runs area */}
+              {showLatestBallInfo && latestBall && (
+                <div className="animate-fade-in absolute inset-0 flex items-center justify-center">
+                  <div className="bg-gradient-to-r from-blue-500/90 to-purple-500/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border-2 border-white/30 w-full max-w-[300px]">
+                    <div className="flex items-center gap-2 justify-between">
+                      <div className={`w-12 h-12 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg border-2 border-white dark:border-gray-800`}>
+                        {latestBall}
+                      </div>
+                      <div className="text-lg font-bold text-white dark:text-white flex-1 text-center">
+                        {getLatestBallDescription()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="flex items-center gap-2">
@@ -408,69 +410,11 @@ export default function Scoreboard({
             {getMatchInfoContent()}
           </div>
           
-          {/* Ball by Ball section - Show all balls without limiting to 6 */}
+          {/* Ball by Ball section - Show last 12 balls */}
           <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
-            <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Ball by Ball</div>
-            <div className="flex flex-row gap-4">
-              {/* Current Over - on the LEFT side */}
-              {currentOver >= 0 && (
-                <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
-                  <div className="bg-blue-100 dark:bg-blue-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Current Over: {currentOver + 1}</span>
-                  </div>
-                  <div className="p-3 bg-white dark:bg-gray-900">
-                    <div className="flex flex-row flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin">
-                      {recentTwoOvers[currentOver.toString()]?.map((ball, idx) => {
-                        const uniqueKey = `curr-${idx}-${ball}`;
-                        const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
-                        
-                        return (
-                          <div key={uniqueKey} className="inline-block flex-shrink-0">
-                            <div 
-                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'}`}
-                            >
-                              {ball}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                      = {calculateOverTotal(recentTwoOvers[currentOver.toString()] || [])}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Previous Over - on the RIGHT side */}
-              {previousOver >= 0 && (
-                <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex-1">
-                  <div className="bg-green-100 dark:bg-green-900/40 px-3 py-1 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-sm font-semibold text-green-800 dark:text-green-300">Previous Over: {previousOver + 1}</span>
-                  </div>
-                  <div className="p-3 bg-white dark:bg-gray-900">
-                    <div className="flex flex-row flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin">
-                      {recentTwoOvers[previousOver.toString()]?.map((ball, idx) => {
-                        const uniqueKey = `prev-${idx}-${ball}`;
-                        const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
-                        
-                        return (
-                          <div key={uniqueKey} className="inline-block flex-shrink-0">
-                            <div 
-                              className={`w-10 h-10 ${getBallColor(ball)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'}`}
-                            >
-                              {ball}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="mt-2 text-right text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap text-lg">
-                      = {calculateOverTotal(recentTwoOvers[previousOver.toString()] || [])}
-                    </div>
-                  </div>
-                </div>
-              )}
+            <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Last 12 Balls</div>
+            <div className="flex items-center justify-center">
+              {renderLastTwelveBalls()}
             </div>
           </div>
           
@@ -743,22 +687,6 @@ export default function Scoreboard({
           </Card>
         </div>
 
-        {/* Ball-by-ball animation area below the bowler section */}
-        <div className="w-full flex justify-center mt-4">
-          {latestBall && showLatestBallInfo && (
-            <div className="bg-gradient-to-r from-blue-500/90 to-purple-500/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border-2 border-white/30 w-full max-w-[600px] animate-fade-in">
-              <div className="flex items-center gap-2 justify-between">
-                <div className={`w-12 h-12 ${getBallColor(latestBall)} rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg border-2 border-white dark:border-gray-800`}>
-                  {latestBall}
-                </div>
-                <div className="text-lg font-bold text-white dark:text-white flex-1 text-center">
-                  {getLatestBallDescription()}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
         <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-primary/30">
           <CardContent className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
