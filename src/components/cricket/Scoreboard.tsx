@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,8 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ScorecardProps {
   totalRuns: number;
@@ -75,6 +78,7 @@ export default function Scoreboard({
   const [latestBall, setLatestBall] = useState<string | null>(null);
   const [showLatestBallInfo, setShowLatestBallInfo] = useState(false);
   const [showTotalRuns, setShowTotalRuns] = useState(true);
+  const [showBallsPopover, setShowBallsPopover] = useState(false);
   
   // State for cycling display types
   const [displayInfoType, setDisplayInfoType] = useState<'reqRate' | 'toWin' | 'partnership'>(isSecondInnings ? 'reqRate' : 'partnership');
@@ -157,7 +161,7 @@ export default function Scoreboard({
     return () => clearInterval(interval);
   }, []);
 
-  // Simplified effect to just update the latest ball info without animations
+  // Only update the latest ball info without animations
   useEffect(() => {
     if (recentBalls.length > 0) {
       const latestBall = recentBalls[recentBalls.length - 1];
@@ -231,18 +235,129 @@ export default function Scoreboard({
         return <div className="text-amber-800 dark:text-amber-200">Match in progress</div>;
     }
   };
+
+  // Group recentBalls by overs for better visualization
+  const groupBallsByOver = () => {
+    const groupedBalls: { [key: number]: string[] } = {};
+    
+    // Process balls in reverse order (newest first)
+    for (let i = recentBalls.length - 1; i >= 0; i--) {
+      const ballIndexInMatch = totalBalls - (recentBalls.length - 1 - i);
+      const overNumber = Math.floor(ballIndexInMatch / 6);
+      
+      if (!groupedBalls[overNumber]) {
+        groupedBalls[overNumber] = [];
+      }
+      
+      // Insert at beginning to maintain ball order within over
+      groupedBalls[overNumber].unshift(recentBalls[i]);
+    }
+    
+    return groupedBalls;
+  };
   
-  // Simple ball rendering without animations or interactive features
+  const groupedBalls = groupBallsByOver();
+  const currentOverNumber = Math.floor(totalBalls / 6);
+  
+  // Create a more attractive ball-by-ball display with over breaks
+  const renderBallByBallPopover = () => {
+    return (
+      <div className="w-full max-w-xl p-2">
+        <div className="text-center font-bold text-xl text-primary mb-2">Ball-by-Ball Updates</div>
+        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+          {Object.entries(groupedBalls)
+            .sort((a, b) => Number(b[0]) - Number(a[0])) // Sort by over number (descending)
+            .map(([overNumber, balls]) => (
+              <div key={`over-${overNumber}`} className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                <div className="font-medium text-blue-700 dark:text-blue-300 mb-2">
+                  Over {overNumber} {Number(overNumber) === currentOverNumber ? '(Current)' : ''}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {balls.map((ball, idx) => {
+                    // Determine if this ball is the most recent in the current over
+                    const isLatestInOver = Number(overNumber) === currentOverNumber && idx === balls.length - 1;
+                    const isLatestBall = Number(overNumber) === currentOverNumber && idx === balls.length - 1 && 
+                                        (Number(overNumber) === currentOverNumber);
+                    
+                    // Style based on ball value and if it's the latest
+                    let ballStyle = "w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg transition-all duration-300";
+                    
+                    if (ball === 'W') {
+                      ballStyle += " bg-red-600 animate-pulse";
+                    } else if (ball === '4') {
+                      ballStyle += " bg-blue-500";
+                    } else if (ball === '6') {
+                      ballStyle += " bg-purple-600";
+                    } else if (ball === '0') {
+                      ballStyle += " bg-gray-400 dark:bg-gray-600";
+                    } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
+                      ballStyle += " bg-yellow-500";
+                    } else {
+                      ballStyle += " bg-green-500";
+                    }
+                    
+                    // Add highlight effect for latest ball
+                    if (isLatestBall) {
+                      ballStyle += " ring-4 ring-yellow-300 dark:ring-yellow-500 shadow-lg scale-110";
+                    } else if (isLatestInOver) {
+                      ballStyle += " ring-2 ring-blue-300 dark:ring-blue-500";
+                    }
+                    
+                    return (
+                      <div key={`ball-${overNumber}-${idx}`} className={ballStyle}>
+                        {ball}
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {Number(overNumber) === currentOverNumber && balls.length > 0 && (
+                  <div className="mt-3 bg-white dark:bg-gray-800 p-3 rounded-md shadow text-center text-lg font-medium border-l-4 border-primary">
+                    {getLatestBallDescription()}
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+      </div>
+    );
+  };
+  
+  // Simple ball rendering without animations for the main view
   const renderLastTwelveBalls = () => {
     const last12Balls = recentBalls.slice(-12);
     
     return (
       <div className="flex flex-wrap gap-2 justify-start items-center w-full">
-        {last12Balls.map((ball, idx) => (
-          <div key={`ball-${idx}`} className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-800 dark:text-white font-bold text-lg">
-            {ball}
-          </div>
-        ))}
+        {last12Balls.map((ball, idx) => {
+          // Style based on ball value
+          let ballStyle = "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg";
+          
+          if (ball === 'W') {
+            ballStyle += " bg-red-600 text-white";
+          } else if (ball === '4') {
+            ballStyle += " bg-blue-500 text-white";
+          } else if (ball === '6') {
+            ballStyle += " bg-purple-600 text-white";
+          } else if (ball === '0') {
+            ballStyle += " bg-gray-400 dark:bg-gray-600 text-white";
+          } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
+            ballStyle += " bg-yellow-500 text-white";
+          } else {
+            ballStyle += " bg-green-500 text-white";
+          }
+          
+          // Highlight the latest ball
+          if (idx === last12Balls.length - 1) {
+            ballStyle += " ring-2 ring-yellow-300 dark:ring-yellow-500";
+          }
+          
+          return (
+            <div key={`ball-${idx}`} className={ballStyle}>
+              {ball}
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -289,7 +404,7 @@ export default function Scoreboard({
               {/* Latest ball information - simplified */}
               {showLatestBallInfo && latestBall && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-blue-500 rounded-lg p-3 shadow-lg w-full max-w-[300px]">
+                  <div className="bg-blue-500 rounded-lg p-3 shadow-lg w-full max-w-[300px] animate-fade-in">
                     <div className="text-lg font-bold text-white text-center">
                       {getLatestBallDescription()}
                     </div>
@@ -317,9 +432,23 @@ export default function Scoreboard({
             {getMatchInfoContent()}
           </div>
           
-          {/* Ball by Ball section - Simple version without animations */}
+          {/* Ball by Ball section with popup feature */}
           <div className="mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-4 shadow-md border border-gray-300 dark:border-gray-700">
-            <div className="text-sm font-semibold mb-3">Last 12 Balls</div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold">Last 12 Balls</span>
+              <Dialog open={showBallsPopover} onOpenChange={setShowBallsPopover}>
+                <DialogTrigger asChild>
+                  <button 
+                    className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full transition-colors"
+                  >
+                    View All Balls
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-2xl">
+                  {renderBallByBallPopover()}
+                </DialogContent>
+              </Dialog>
+            </div>
             <div className="flex items-center justify-center overflow-x-auto py-2">
               {renderLastTwelveBalls()}
             </div>
@@ -404,38 +533,35 @@ export default function Scoreboard({
             )}
             
             {!isSecondInnings && (
-              <>
-                {/* Enhanced Partnership info with batsmen names and visual elements - always shown in first innings */}
-                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 h-24 flex flex-col justify-center text-center shadow-md col-span-3 border-2 border-amber-300 dark:border-amber-700">
-                  <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="flex items-center justify-center gap-2 mb-1">
-                      <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{striker || '---'}</span> 
-                      <span className="text-xs mx-1">&amp;</span>
-                      <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{nonStriker || '---'}</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="flex gap-1 items-center">
-                        <div className="w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">R</span>
-                        </div>
-                        <div className="text-xl font-bold text-amber-700 dark:text-amber-300">
-                          {partnershipRuns}
-                        </div>
+              <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 h-24 flex flex-col justify-center text-center shadow-md col-span-3 border-2 border-amber-300 dark:border-amber-700">
+                <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
+                <div className="flex flex-col items-center justify-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{striker || '---'}</span> 
+                    <span className="text-xs mx-1">&amp;</span>
+                    <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{nonStriker || '---'}</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="flex gap-1 items-center">
+                      <div className="w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">R</span>
                       </div>
-                      <span className="text-amber-600 dark:text-amber-400">off</span>
-                      <div className="flex gap-1 items-center">
-                        <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">B</span>
-                        </div>
-                        <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                          {partnershipBalls}
-                        </div>
+                      <div className="text-xl font-bold text-amber-700 dark:text-amber-300">
+                        {partnershipRuns}
+                      </div>
+                    </div>
+                    <span className="text-amber-600 dark:text-amber-400">off</span>
+                    <div className="flex gap-1 items-center">
+                      <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">B</span>
+                      </div>
+                      <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                        {partnershipBalls}
                       </div>
                     </div>
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
