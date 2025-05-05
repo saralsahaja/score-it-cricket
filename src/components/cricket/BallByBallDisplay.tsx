@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertTriangle, Info } from "lucide-react";
+import { Info } from "lucide-react";
 
 interface BallByBallDisplayProps {
   recentBalls: string[];
@@ -24,16 +24,6 @@ export default function BallByBallDisplay({
   previousOverBalls
 }: BallByBallDisplayProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [animateBox, setAnimateBox] = useState(false);
-
-  // Pulse animation when a new ball is added
-  useEffect(() => {
-    if (recentBalls.length > 0) {
-      setAnimateBox(true);
-      const timer = setTimeout(() => setAnimateBox(false), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [recentBalls.length]);
 
   // Format balls for display with consistent styling
   const getBallClassName = (ball: string) => {
@@ -57,32 +47,30 @@ export default function BallByBallDisplay({
     return className;
   };
 
-  // Get current over ball display with proper numbering
-  const getCurrentOverDisplay = () => {
-    // Only show the balls for the current over
-    return recentBalls.slice(-currentBall).map((ball, index) => {
-      const ballNumber = index + 1;
+  // Get the last 12 balls for display
+  const getLastBallsDisplay = () => {
+    // Combine previous over balls and current over balls if needed
+    const allBalls = [...previousOverBalls, ...recentBalls];
+    
+    // Take only the last 12 balls
+    const lastBalls = allBalls.slice(-12);
+    
+    // Display balls from left to right (oldest to newest)
+    return lastBalls.map((ball, index) => {
+      const overNumber = index < previousOverBalls.length ? currentOver - 1 : currentOver;
+      const ballNumber = index < previousOverBalls.length ? 
+        index + 1 : 
+        index - previousOverBalls.length + 1;
+      
       return (
         <div key={index} className="flex flex-col items-center">
           <div className={getBallClassName(ball)}>
             {ball}
           </div>
-          <span className="text-xs text-muted-foreground mt-1">{currentOver}.{ballNumber}</span>
+          <span className="text-xs text-muted-foreground mt-1">{overNumber}.{ballNumber}</span>
         </div>
       );
     });
-  };
-
-  // Get previous over ball display
-  const getPreviousOverDisplay = () => {
-    return previousOverBalls.map((ball, index) => (
-      <div key={index} className="flex flex-col items-center">
-        <div className={getBallClassName(ball)}>
-          {ball}
-        </div>
-        <span className="text-xs text-muted-foreground mt-1">{currentOver > 1 ? currentOver - 1 : '-'}.{index + 1}</span>
-      </div>
-    ));
   };
 
   return (
@@ -91,7 +79,7 @@ export default function BallByBallDisplay({
         onClick={() => setIsOpen(true)}
         variant="outline"
         size="sm"
-        className={`flex gap-2 items-center ${animateBox ? 'animate-pulse bg-amber-100' : 'bg-white'}`}
+        className="flex gap-2 items-center bg-white"
       >
         <Info className="h-4 w-4" />
         View Ball-by-Ball
@@ -103,40 +91,23 @@ export default function BallByBallDisplay({
             <DialogTitle className="text-center text-xl">Ball-by-Ball Updates</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 p-2">
+          <div className="p-2">
             <Card className="border-2 border-primary/10">
               <CardContent className="p-3">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-md">
-                    Current Over: {currentOver}.{currentBall}
+                    Last 12 Balls
                   </h3>
-                  <Badge className="bg-blue-600">{currentOverRuns} runs</Badge>
+                  <Badge className="bg-blue-600">
+                    {previousOverRuns + currentOverRuns} runs
+                  </Badge>
                 </div>
                 
                 <div className="flex gap-2 flex-wrap">
-                  {getCurrentOverDisplay()}
-                  {currentBall === 0 && (
+                  {getLastBallsDisplay()}
+                  {recentBalls.length === 0 && previousOverBalls.length === 0 && (
                     <div className="text-center w-full text-sm text-muted-foreground">
-                      No balls bowled in this over yet
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-2 border-primary/10">
-              <CardContent className="p-3">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-bold text-md">
-                    Previous Over: {currentOver > 1 ? currentOver - 1 : '-'}
-                  </h3>
-                  <Badge className="bg-blue-600">{previousOverRuns} runs</Badge>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {getPreviousOverDisplay()}
-                  {previousOverBalls.length === 0 && (
-                    <div className="text-center w-full text-sm text-muted-foreground">
-                      No previous over data
+                      No balls bowled yet
                     </div>
                   )}
                 </div>
