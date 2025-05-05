@@ -82,8 +82,10 @@ export default function Scoreboard({
   const [showTotalRuns, setShowTotalRuns] = useState(true);
   // State for cycling display types
   const [displayInfoType, setDisplayInfoType] = useState<'reqRate' | 'toWin' | 'partnership'>(isSecondInnings ? 'reqRate' : 'partnership');
-  // New state for cycling match info
+  // State for cycling match info
   const [matchInfoType, setMatchInfoType] = useState<'toss' | 'lastWicket' | 'bestBowler'>('toss');
+  // State to show ball popup
+  const [showBallPopup, setShowBallPopup] = useState(false);
   
   // Determine batting and bowling teams based on innings
   let battingTeam, bowlingTeam, battingTeamLogo, bowlingTeamLogo;
@@ -164,6 +166,10 @@ export default function Scoreboard({
     if (recentBalls.length > 0) {
       const latestBall = recentBalls[recentBalls.length - 1];
       const key = `${latestBall}-${Date.now()}`;
+      
+      // Show ball popup briefly when a new ball is added
+      setShowBallPopup(true);
+      setTimeout(() => setShowBallPopup(false), 3000);
       
       if (latestBall === "W") {
         setAnimatingBalls(prev => ({ ...prev, [key]: "animate-wicket" }));
@@ -279,13 +285,13 @@ export default function Scoreboard({
     const last12Balls = recentBalls.slice(-12);
     
     return (
-      <div className="flex flex-row flex-wrap gap-2 justify-start">
+      <div className="flex flex-wrap gap-2 justify-start items-center w-full">
         {last12Balls.map((ball, idx) => {
           const isLatest = idx === last12Balls.length - 1;
           const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
           
           return (
-            <div key={`ball-${idx}`} className="inline-block flex-shrink-0">
+            <div key={`ball-${idx}`} className="flex-shrink-0">
               <div 
                 className={`
                   w-10 h-10 
@@ -296,6 +302,7 @@ export default function Scoreboard({
                   shadow-lg border-2 
                   ${isLatest ? 'ring-2 ring-offset-2 ring-white dark:ring-offset-gray-800' : ''}
                   ${isExtra ? 'border-yellow-300 dark:border-yellow-600' : 'border-white dark:border-gray-800'}
+                  ${isLatest ? 'animate-pulse' : ''}
                 `}
               >
                 {ball}
@@ -333,6 +340,54 @@ export default function Scoreboard({
           <div className="six-animation bg-purple-500/30 absolute inset-0 animate-pulse backdrop-blur-sm"></div>
           <div className="text-9xl font-extrabold text-purple-600 animate-bounce shadow-lg">
             SIX!
+          </div>
+        </div>
+      )}
+      
+      {/* Ball-by-ball popup overlay */}
+      {showBallPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-40 pointer-events-none">
+          <div className="bg-[#1A1F2C]/90 backdrop-blur-md p-6 rounded-xl shadow-2xl border-2 border-blue-400/30 w-[90%] max-w-4xl animate-scale-in">
+            <h3 className="text-xl font-bold text-white mb-4 text-center">Ball-by-Ball Updates</h3>
+            <div className="grid grid-cols-12 gap-2 justify-items-center">
+              {recentBalls.slice(-12).map((ball, idx) => {
+                const isLatest = idx === recentBalls.slice(-12).length - 1;
+                const isExtra = ball === 'WD' || ball === 'NB' || ball === 'LB' || ball === 'OT';
+                
+                return (
+                  <div key={`popup-ball-${idx}`} className="col-span-1 relative">
+                    <div 
+                      className={`
+                        w-14 h-14 
+                        ${getBallColor(ball)} 
+                        rounded-full 
+                        flex items-center justify-center 
+                        text-white font-bold text-xl
+                        shadow-lg border-2 
+                        ${isLatest ? 'ring-4 ring-offset-2 ring-blue-400 scale-110' : ''}
+                        ${isExtra ? 'border-yellow-300' : 'border-white/50'}
+                        ${isLatest ? 'animate-pulse' : ''}
+                        transition-all duration-300
+                      `}
+                    >
+                      {ball}
+                    </div>
+                    {isLatest && (
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-blue-500/80 px-2 py-1 rounded text-white text-xs font-bold">
+                        Latest
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {latestBall && (
+              <div className="mt-6 bg-gradient-to-r from-blue-500/90 to-purple-500/90 p-3 rounded-lg shadow-inner border border-white/20">
+                <p className="text-center text-white font-bold text-lg">
+                  {getLatestBallDescription()}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -410,10 +465,13 @@ export default function Scoreboard({
             {getMatchInfoContent()}
           </div>
           
-          {/* Ball by Ball section - Show last 12 balls */}
-          <div className="mb-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-md border-2 border-primary/20">
-            <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 font-semibold">Last 12 Balls</div>
-            <div className="flex items-center justify-center">
+          {/* Ball by Ball section - Enhanced display with latest ball highlighting */}
+          <div className="mb-4 bg-gradient-to-r from-blue-900/80 to-purple-900/80 rounded-lg p-4 shadow-md border border-blue-400/30 cursor-pointer" onClick={() => setShowBallPopup(true)}>
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-sm text-white font-semibold">Last 12 Balls</div>
+              <div className="text-xs text-blue-200">(Click for detailed view)</div>
+            </div>
+            <div className="flex items-center justify-center overflow-x-auto py-2">
               {renderLastTwelveBalls()}
             </div>
           </div>
