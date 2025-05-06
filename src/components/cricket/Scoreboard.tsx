@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -162,7 +161,7 @@ export default function Scoreboard({
     return () => clearInterval(interval);
   }, []);
 
-  // Only update the latest ball info with animations
+  // Only update the latest ball info with animations - with extended 4 second duration
   useEffect(() => {
     if (recentBalls.length > 0) {
       const latestBall = recentBalls[recentBalls.length - 1];
@@ -178,11 +177,11 @@ export default function Scoreboard({
         setAnimatingBall(null);
       }, 1000);
       
-      // Show total runs again after 3 seconds
+      // Show total runs again after 4 seconds (extended from 3)
       setTimeout(() => {
         setShowLatestBallInfo(false);
         setShowTotalRuns(true);
-      }, 3000);
+      }, 4000);
     }
   }, [recentBalls]);
 
@@ -330,7 +329,7 @@ export default function Scoreboard({
     );
   };
   
-  // Organize last 12 balls into current over and previous over
+  // Organize last 12 balls into current over and previous over on same row
   const renderLastTwelveBalls = () => {
     const last12Balls = recentBalls.slice(-12);
     const ballsInCurrentOver = totalBalls % 6; // 0 means over just completed
@@ -346,87 +345,99 @@ export default function Scoreboard({
     
     return (
       <div className="space-y-3 w-full">
-        {/* Current Over */}
-        {currentOverBalls.length > 0 && (
-          <div className="flex flex-col">
-            <span className="text-xs font-semibold text-blue-600 mb-1">Current Over {currentOverNumber}</span>
+        <div className="flex justify-between items-start gap-4">
+          {/* Current Over - Now positioned side by side with Previous Over */}
+          <div className="flex-1">
+            <span className="text-xs font-semibold text-blue-600 mb-1 block">
+              Current Over {currentOverNumber}
+            </span>
             <div className="flex flex-wrap gap-2">
-              {currentOverBalls.map((ball, idx) => {
-                // Style based on ball value
-                let ballStyle = "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg";
-                
-                if (ball === 'W') {
-                  ballStyle += " bg-red-600 text-white";
-                } else if (ball === '4') {
-                  ballStyle += " bg-blue-500 text-white";
-                } else if (ball === '6') {
-                  ballStyle += " bg-purple-600 text-white";
-                } else if (ball === '0') {
-                  ballStyle += " bg-gray-400 dark:bg-gray-600 text-white";
-                } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
-                  ballStyle += " bg-yellow-500 text-white";
-                } else {
-                  ballStyle += " bg-green-500 text-white";
-                }
-                
-                // Highlight the latest ball
-                if (idx === currentOverBalls.length - 1) {
-                  ballStyle += " ring-2 ring-yellow-300 dark:ring-yellow-500";
-                }
-                
-                return (
-                  <div key={`current-ball-${idx}`} className={ballStyle}>
-                    {ball}
-                  </div>
-                );
-              })}
+              {currentOverBalls.length > 0 ? (
+                currentOverBalls.map((ball, idx) => {
+                  // Style based on ball value
+                  let ballStyle = "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg";
+                  
+                  if (ball === 'W') {
+                    ballStyle += " bg-red-600 text-white";
+                  } else if (ball === '4') {
+                    ballStyle += " bg-blue-500 text-white";
+                  } else if (ball === '6') {
+                    ballStyle += " bg-purple-600 text-white";
+                  } else if (ball === '0') {
+                    ballStyle += " bg-gray-400 dark:bg-gray-600 text-white";
+                  } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
+                    ballStyle += " bg-yellow-500 text-white";
+                  } else {
+                    ballStyle += " bg-green-500 text-white";
+                  }
+                  
+                  // Highlight the latest ball
+                  if (idx === currentOverBalls.length - 1) {
+                    ballStyle += " ring-2 ring-yellow-300 dark:ring-yellow-500";
+                  }
+                  
+                  return (
+                    <div key={`current-ball-${idx}`} className={ballStyle}>
+                      {ball}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-gray-500 italic text-sm">
+                  No balls in current over
+                </div>
+              )}
             </div>
           </div>
-        )}
-        
-        {/* Previous Over */}
-        {previousOverBalls.length > 0 && (
-          <div className="flex flex-col">
-            <span className="text-xs font-semibold text-gray-600 mb-1">
+          
+          {/* Previous Over - Now positioned side by side with Current Over */}
+          <div className="flex-1">
+            <span className="text-xs font-semibold text-gray-600 mb-1 block">
               Previous Over {currentOverNumber - (currentOverBalls.length > 0 ? 1 : 0)}
             </span>
             <div className="flex flex-wrap gap-2">
-              {previousOverBalls.slice(-6).map((ball, idx) => {
-                // Style based on ball value
-                let ballStyle = "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg opacity-80";
-                
-                if (ball === 'W') {
-                  ballStyle += " bg-red-600 text-white";
-                } else if (ball === '4') {
-                  ballStyle += " bg-blue-500 text-white";
-                } else if (ball === '6') {
-                  ballStyle += " bg-purple-600 text-white";
-                } else if (ball === '0') {
-                  ballStyle += " bg-gray-400 dark:bg-gray-600 text-white";
-                } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
-                  ballStyle += " bg-yellow-500 text-white";
-                } else {
-                  ballStyle += " bg-green-500 text-white";
-                }
-                
-                return (
-                  <div key={`prev-ball-${idx}`} className={ballStyle}>
-                    {ball}
-                  </div>
-                );
-              })}
+              {previousOverBalls.length > 0 ? (
+                previousOverBalls.slice(-6).map((ball, idx) => {
+                  // Style based on ball value
+                  let ballStyle = "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg opacity-80";
+                  
+                  if (ball === 'W') {
+                    ballStyle += " bg-red-600 text-white";
+                  } else if (ball === '4') {
+                    ballStyle += " bg-blue-500 text-white";
+                  } else if (ball === '6') {
+                    ballStyle += " bg-purple-600 text-white";
+                  } else if (ball === '0') {
+                    ballStyle += " bg-gray-400 dark:bg-gray-600 text-white";
+                  } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
+                    ballStyle += " bg-yellow-500 text-white";
+                  } else {
+                    ballStyle += " bg-green-500 text-white";
+                  }
+                  
+                  return (
+                    <div key={`prev-ball-${idx}`} className={ballStyle}>
+                      {ball}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-gray-500 italic text-sm">
+                  No previous over data
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
     );
   };
   
-  // Create animated ball for latest update
+  // Create animated ball for latest update with enhanced styling and sizing
   const renderAnimatedBallUpdate = () => {
     if (!animatingBall) return null;
     
-    // Define style based on ball value
+    // Define style based on ball value with fixed width and height
     let ballClass = "w-full h-full rounded-lg flex items-center justify-center transition-all duration-500 animate-scale-in";
     let textColor = "text-white";
     let bgColor = "";
@@ -468,7 +479,7 @@ export default function Scoreboard({
     }
     
     return (
-      <div className={`${ballClass} ${bgColor} px-4 py-2 shadow-lg min-w-[300px] max-w-[300px] h-[75px]`}>
+      <div className={`${ballClass} ${bgColor} px-4 py-2 shadow-lg w-[300px] h-[75px] mx-auto`}>
         <div className={`flex flex-col items-center justify-center ${textColor}`}>
           <div className="text-2xl font-bold">{animatingBall}</div>
           <div className="text-sm mt-1">{getLatestBallDescription()}</div>

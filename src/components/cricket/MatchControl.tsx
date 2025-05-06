@@ -82,7 +82,7 @@ export default function MatchControl({
     });
   };
 
-  // Check conditions for blocking run updates
+  // Check conditions for blocking run updates - enhanced with additional conditions
   const isRunUpdateBlocked = () => {
     // Block if no striker or non-striker is selected
     if (!striker || !nonStriker) {
@@ -102,6 +102,11 @@ export default function MatchControl({
     // Block if a wicket fell and no new batsman is selected
     if (wickets > 0 && (!striker || !nonStriker)) {
       return {blocked: true, message: "Please select a batsman first"};
+    }
+    
+    // Block if innings is complete (all out or overs complete)
+    if (wickets >= 10 || totalBalls >= totalOvers * 6) {
+      return {blocked: true, message: "Innings complete"};
     }
     
     return {blocked: false, message: ""};
@@ -221,7 +226,7 @@ export default function MatchControl({
                         variant={striker === p ? "default" : "outline"}
                         onClick={() => handleBatsmanSelection(p, true)}
                         className="text-xs"
-                        disabled={wickets >= 10 || isPlayerOut(p)}
+                        disabled={wickets >= 10 || isPlayerOut(p) || isPlayerRetiredHurt(p)}
                       >
                         <UserCheck className="h-3 w-3 mr-1" />
                         Striker
@@ -231,7 +236,7 @@ export default function MatchControl({
                         variant={nonStriker === p ? "default" : "outline"}
                         onClick={() => handleBatsmanSelection(p, false)}
                         className="text-xs"
-                        disabled={wickets >= 10 || isPlayerOut(p)}
+                        disabled={wickets >= 10 || isPlayerOut(p) || isPlayerRetiredHurt(p)}
                       >
                         <User className="h-3 w-3 mr-1" />
                         Non-Striker
@@ -286,7 +291,7 @@ export default function MatchControl({
                         size="sm"
                         variant={currentBowler === p ? "default" : "outline"}
                         onClick={() => handleSelectBowler(p)}
-                        disabled={(currentBowler === p && !isOverComplete) || wickets >= 10}
+                        disabled={(currentBowler === p && !isOverComplete) || wickets >= 10 || (totalBalls >= totalOvers * 6)}
                         className={isOverComplete && currentBowler !== p ? "animate-pulse bg-yellow-500 hover:bg-yellow-600 text-white" : ""}
                       >
                         Select Bowler
@@ -326,7 +331,7 @@ export default function MatchControl({
                     r === 4 ? 'bg-blue-500 hover:bg-blue-600 text-white' : 
                     r === 6 ? 'bg-purple-500 hover:bg-purple-600 text-white' : ''
                   }`}
-                  disabled={wickets >= 10 || blockStatus.blocked}
+                  disabled={wickets >= 10 || blockStatus.blocked || isOverComplete}
                 >
                   {r}
                 </Button>
@@ -336,7 +341,7 @@ export default function MatchControl({
                   <Button 
                     variant="destructive"
                     className="text-lg font-bold"
-                    disabled={wickets >= 10 || blockStatus.blocked}
+                    disabled={wickets >= 10 || blockStatus.blocked || isOverComplete}
                   >
                     <Slash className="h-4 w-4 mr-1" />
                     W
@@ -389,7 +394,7 @@ export default function MatchControl({
                       variant="outline" 
                       className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
                       onClick={() => handleAddRun(1, 'wide')}
-                      disabled={wickets >= 10 || blockStatus.blocked}
+                      disabled={wickets >= 10 || blockStatus.blocked || isOverComplete}
                     >
                       <Waves className="h-4 w-4 mr-1" />
                       Wide
@@ -406,7 +411,7 @@ export default function MatchControl({
                       variant="outline" 
                       className="bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
                       onClick={() => handleAddRun(1, 'noBall')}
-                      disabled={wickets >= 10 || blockStatus.blocked}
+                      disabled={wickets >= 10 || blockStatus.blocked || isOverComplete}
                     >
                       <AlertTriangle className="h-4 w-4 mr-1" />
                       No Ball
@@ -425,7 +430,7 @@ export default function MatchControl({
                     <Button 
                       variant="outline" 
                       className="bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
-                      disabled={wickets >= 10 || blockStatus.blocked}
+                      disabled={wickets >= 10 || blockStatus.blocked || isOverComplete}
                     >
                       <ArrowUpRight className="h-4 w-4 mr-1" />
                       Overthrow
@@ -444,7 +449,7 @@ export default function MatchControl({
                     <Button 
                       variant="outline" 
                       className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200"
-                      disabled={wickets >= 10 || blockStatus.blocked}
+                      disabled={wickets >= 10 || blockStatus.blocked || isOverComplete}
                     >
                       <LifeBuoy className="h-4 w-4 mr-1" />
                       Leg Bye
