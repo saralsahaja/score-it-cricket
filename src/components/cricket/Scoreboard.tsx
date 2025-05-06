@@ -734,73 +734,127 @@ export default function Scoreboard({
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800">
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-primary/30">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-primary/30 rounded-lg">
               <CardContent className="p-4">
+                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-4 text-xl">
+                  <Trophy className="h-6 w-6 text-blue-800 dark:text-blue-300" />
+                  Top Performances
+                </h3>
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-blue-200 dark:border-blue-800">
-                    <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1 mb-2 text-lg">
-                      <Award className="h-6 w-6 text-blue-800 dark:text-blue-300" />
-                      Top Performer
+                  {/* Top Scorer */}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg p-4 shadow-md border-2 border-blue-200 dark:border-blue-800 transform transition-transform hover:scale-105">
+                    <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1 mb-2 text-base">
+                      <Award className="h-5 w-5 text-blue-700 dark:text-blue-300" />
+                      Top Scorer
                     </h3>
-                    {topScorer && topScorer.runs > 0 ? (
-                      <div className="text-center">
-                        <div className="font-bold text-xl">{topScorer.name}</div>
-                        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{topScorer.runs} <span className="text-md font-normal text-gray-500 dark:text-gray-400">({topScorer.balls} balls)</span></div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          SR: {((topScorer.runs / topScorer.balls) * 100).toFixed(1)} | 4s: {topScorer.fours} | 6s: {topScorer.sixes}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center text-gray-500 dark:text-gray-400 italic">No data available</div>
-                    )}
+                    <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-800/80">
+                      {topScorer && topScorer.runs > 0 ? (
+                        <>
+                          <div className="font-bold text-xl text-blue-900 dark:text-blue-300">{topScorer.name}</div>
+                          <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{topScorer.runs}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            ({topScorer.balls} balls)
+                          </div>
+                          <div className="flex justify-center items-center gap-3 mt-2">
+                            <div className="flex flex-col items-center">
+                              <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-base px-2">{topScorer.fours}</Badge>
+                              <span className="text-xs text-gray-600 dark:text-gray-400">4s</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900 text-base px-2">{topScorer.sixes}</Badge>
+                              <span className="text-xs text-gray-600 dark:text-gray-400">6s</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-base px-2">
+                                {((topScorer.runs / topScorer.balls) * 100).toFixed(1)}
+                              </Badge>
+                              <span className="text-xs text-gray-600 dark:text-gray-400">SR</span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center text-gray-500 dark:text-gray-400 italic py-8">No data available</div>
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-green-200 dark:border-green-800">
-                    <h3 className="font-bold text-green-800 dark:text-green-300 flex items-center gap-1 mb-2 text-lg">
-                      <Trophy className="h-6 w-6 text-green-800 dark:text-green-300" />
+                  {/* Best Bowler */}
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-4 shadow-md border-2 border-green-200 dark:border-green-800 transform transition-transform hover:scale-105">
+                    <h3 className="font-bold text-green-800 dark:text-green-300 flex items-center gap-1 mb-2 text-base">
+                      <Trophy className="h-5 w-5 text-green-700 dark:text-green-300" />
                       Best Bowler
                     </h3>
-                    {bestBowler ? (
-                      <div className="text-center">
-                        <div className="font-bold text-xl">{bestBowler.name}</div>
-                        <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                          {bestBowler.wickets}-{bestBowler.runs} <span className="text-md font-normal text-gray-500 dark:text-gray-400">
+                    <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-800/80">
+                      {bestBowler ? (
+                        <>
+                          <div className="font-bold text-xl text-green-900 dark:text-green-300">{bestBowler.name}</div>
+                          <div className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">
+                            {bestBowler.wickets}-{bestBowler.runs}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             ({Math.floor(bestBowler.balls/6)}.{bestBowler.balls%6} overs)
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          Economy: {((bestBowler.runs / (bestBowler.balls/6)) || 0).toFixed(2)}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center text-gray-500 dark:text-gray-400 italic">No data available</div>
-                    )}
+                          </div>
+                          <div className="flex justify-center items-center gap-3 mt-2">
+                            <div className="flex flex-col items-center">
+                              <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-base px-2">
+                                {((bestBowler.runs / (bestBowler.balls/6)) || 0).toFixed(1)}
+                              </Badge>
+                              <span className="text-xs text-gray-600 dark:text-gray-400">Econ</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900 text-base px-2">
+                                {bestBowler.maidens}
+                              </Badge>
+                              <span className="text-xs text-gray-600 dark:text-gray-400">Mdns</span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center text-gray-500 dark:text-gray-400 italic py-8">No data available</div>
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-purple-200 dark:border-purple-800">
-                    <h3 className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1 mb-2 text-lg">
-                      <Star className="h-6 w-6 text-purple-800 dark:text-purple-300" />
+                  {/* Boundaries */}
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-lg p-4 shadow-md border-2 border-purple-200 dark:border-purple-800 transform transition-transform hover:scale-105">
+                    <h3 className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1 mb-2 text-base">
+                      <Star className="h-5 w-5 text-purple-700 dark:text-purple-300" />
                       Boundaries
                     </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="text-center">
-                        <div className="text-sm font-medium text-blue-600 dark:text-blue-400">Fours</div>
-                        <div className="text-3xl font-bold">{batsmen.reduce((acc, b) => acc + b.fours, 0)}</div>
+                    <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-800/80">
+                      <div className="grid grid-cols-2 gap-4 mt-1">
+                        <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg">
+                          <div className="text-sm font-medium text-blue-600 dark:text-blue-400">Fours</div>
+                          <div className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                            {batsmen.reduce((acc, b) => acc + b.fours, 0)}
+                          </div>
+                        </div>
+                        <div className="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg">
+                          <div className="text-sm font-medium text-purple-600 dark:text-purple-400">Sixes</div>
+                          <div className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+                            {batsmen.reduce((acc, b) => acc + b.sixes, 0)}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-sm font-medium text-purple-600 dark:text-purple-400">Sixes</div>
-                        <div className="text-3xl font-bold">{batsmen.reduce((acc, b) => acc + b.sixes, 0)}</div>
+                      <div className="mt-3 p-2 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+                        <div className="text-sm text-center font-medium">
+                          <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                            {Math.round((batsmen.reduce((acc, b) => acc + (b.fours * 4) + (b.sixes * 6), 0) / Math.max(1, totalRuns)) * 100)}%
+                          </span>
+                          <span className="text-gray-600 dark:text-gray-400 ml-1">
+                            runs from boundaries
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">
-                      {Math.round((batsmen.reduce((acc, b) => acc + (b.fours * 4) + (b.sixes * 6), 0) / Math.max(1, totalRuns)) * 100)}% 
-                      runs from boundaries
                     </div>
                   </div>
                 </div>
               </CardContent>
             </div>
           </Card>
+          
+          {/* Optional: Add another card here for additional stats if needed */}
         </div>
       </CardContent>
     </Card>
