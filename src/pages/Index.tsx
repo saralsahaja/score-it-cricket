@@ -340,20 +340,36 @@ export default function Index() {
     }
   };
 
-  const handleAddRun = (runs: number, extraType?: string) => {
-    // Block run updates when conditions aren't met
+  // Check if run entry is allowed
+  const isRunEntryAllowed = () => {
     if (!striker || !nonStriker) {
-      toast.error("Please select both batsmen before adding runs");
-      return;
+      return false;
     }
     
     if (isOverComplete && !currentBowler) {
-      toast.error("Please select a bowler before adding runs");
-      return;
+      return false;
     }
     
     if (!bowler) {
-      toast.error("Please select a bowler first");
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleAddRun = (runs: number, extraType?: string) => {
+    // Block run updates when conditions aren't met
+    if (!isRunEntryAllowed()) {
+      let errorMsg = "Cannot add runs: ";
+      if (!striker || !nonStriker) {
+        errorMsg += "Please select both batsmen first.";
+      } else if (isOverComplete && !currentBowler) {
+        errorMsg += "Over is complete. Please select a new bowler.";
+      } else if (!bowler) {
+        errorMsg += "Please select a bowler first.";
+      }
+      
+      toast.error(errorMsg);
       return;
     }
 
@@ -458,8 +474,17 @@ export default function Index() {
 
   const handleWicket = (wicketType?: string) => {
     // Block wicket updates when conditions aren't met
-    if (!striker || !bowler) {
-      toast.error("Please select striker and bowler first");
+    if (!isRunEntryAllowed()) {
+      let errorMsg = "Cannot record wicket: ";
+      if (!striker || !nonStriker) {
+        errorMsg += "Please select both batsmen first.";
+      } else if (isOverComplete && !currentBowler) {
+        errorMsg += "Over is complete. Please select a new bowler.";
+      } else if (!bowler) {
+        errorMsg += "Please select a bowler first.";
+      }
+      
+      toast.error(errorMsg);
       return;
     }
 
@@ -689,6 +714,7 @@ export default function Index() {
                 totalBalls={totalBalls}
                 outPlayers={outPlayers}
                 retiredHurtPlayers={retiredHurtPlayers}
+                isRunEntryAllowed={isRunEntryAllowed}
               />
             </TabsContent>
             

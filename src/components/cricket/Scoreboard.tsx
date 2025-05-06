@@ -514,11 +514,12 @@ export default function Scoreboard({
               </div>
             </div>
             
-            <div className="text-center relative h-28 flex items-center justify-center">
+            {/* FIXED: Ensure consistent height and prevent overlapping */}
+            <div className="text-center relative w-[300px] h-[120px] flex items-center justify-center">
               {/* Display total runs/wickets WITH OVERS COUNT */}
               {showTotalRuns && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-6xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
+                  <div className="text-5xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
                     {totalRuns}/{wickets}
                     <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
                       Over: {oversText}
@@ -527,12 +528,10 @@ export default function Scoreboard({
                 </div>
               )}
               
-              {/* Latest ball information with eye-catching animation */}
+              {/* FIXED: Latest ball information with eye-catching animation in fixed position */}
               {showLatestBallInfo && latestBall && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-[300px] h-[75px] animate-fade-in">
-                    {renderAnimatedBallUpdate()}
-                  </div>
+                  {renderAnimatedBallUpdate()}
                 </div>
               )}
             </div>
@@ -578,115 +577,156 @@ export default function Scoreboard({
             </div>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-            <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-md border-2 border-blue-300 dark:border-blue-700">
-              <div className="text-sm text-blue-700 dark:text-blue-300 mb-1 font-semibold">Current RR</div>
-              <div className="text-2xl font-bold flex items-center justify-center text-blue-700 dark:text-blue-300">
-                <TrendingUp className="h-5 w-5 mr-1 text-blue-500 dark:text-blue-400" />
-                {crr}
-              </div>
-            </div>
-            
-            {/* Standardized size/shape for all info panels */}
-            {isSecondInnings && (
-              <>
-                {/* Required run rate section */}
-                {displayInfoType === 'reqRate' && (
-                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 h-24 flex flex-col justify-center text-center shadow-md border-2 border-red-300 dark:border-red-700">
-                    <div className="text-sm text-red-700 dark:text-red-300 mb-1 font-semibold">Required Run Rate</div>
-                    <div className="flex items-center justify-center">
-                      <div className="text-2xl font-bold text-red-700 dark:text-red-300 flex items-center">
-                        <TrendingUp className="h-5 w-5 mr-1 text-red-500 dark:text-red-400" />
-                        {rrr}
-                      </div>
-                      <span className="mx-2 text-red-600 dark:text-red-400">per over</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Runs to win section */}
-                {displayInfoType === 'toWin' && (
-                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 h-24 flex flex-col justify-center text-center shadow-md border-2 border-purple-300 dark:border-purple-700">
-                    <div className="text-sm text-purple-700 dark:text-purple-300 mb-1 font-semibold">To Win</div>
-                    <div className="flex items-center justify-center">
-                      <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
-                        {runsLeft}
-                      </div>
-                      <span className="mx-2 text-purple-600 dark:text-purple-400">runs needed from</span>
-                      <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                        {ballsLeft}
-                      </div>
-                      <span className="ml-2 text-blue-600 dark:text-blue-400">balls</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Partnership section (shown in second innings as part of cycle) */}
-                {displayInfoType === 'partnership' && (
-                  <div className="col-span-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 h-24 flex flex-col justify-center text-center shadow-md border-2 border-amber-300 dark:border-amber-700">
-                    <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="flex items-center justify-center gap-2 mb-1">
-                        <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{striker || '---'}</span> 
-                        <span className="text-xs mx-1">&amp;</span>
-                        <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{nonStriker || '---'}</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="flex gap-1 items-center">
-                          <div className="w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">R</span>
-                          </div>
-                          <div className="text-xl font-bold text-amber-700 dark:text-amber-300">
-                            {partnershipRuns}
-                          </div>
-                        </div>
-                        <span className="text-amber-600 dark:text-amber-400">off</span>
-                        <div className="flex gap-1 items-center">
-                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">B</span>
-                          </div>
-                          <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                            {partnershipBalls}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-            
-            {!isSecondInnings && (
-              <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 h-24 flex flex-col justify-center text-center shadow-md col-span-3 border-2 border-amber-300 dark:border-amber-700">
-                <div className="text-sm text-amber-700 dark:text-amber-300 mb-1 font-semibold">Current Partnership</div>
-                <div className="flex flex-col items-center justify-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{striker || '---'}</span> 
-                    <span className="text-xs mx-1">&amp;</span>
-                    <span className="font-semibold py-1 px-2 bg-amber-100 dark:bg-amber-900/40 rounded-md text-amber-800 dark:text-amber-200">{nonStriker || '---'}</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="flex gap-1 items-center">
-                      <div className="w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">R</span>
-                      </div>
-                      <div className="text-xl font-bold text-amber-700 dark:text-amber-300">
-                        {partnershipRuns}
-                      </div>
-                    </div>
-                    <span className="text-amber-600 dark:text-amber-400">off</span>
-                    <div className="flex gap-1 items-center">
-                      <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">B</span>
-                      </div>
-                      <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                        {partnershipBalls}
-                      </div>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-800 dark:to-blue-900 text-white p-3 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Users className="h-6 w-6" />
+                  <h3 className="font-bold text-2xl">Current Batsmen</h3>
                 </div>
+                <Link 
+                  to="/match-records" 
+                  state={{ 
+                    batsmen, 
+                    bowlersList, 
+                    teamAName, 
+                    teamBName, 
+                    outPlayers, 
+                    retiredHurtPlayers,
+                    gameTitle,
+                    totalRuns,
+                    wickets,
+                    totalOvers,
+                    totalBalls,
+                    crr,
+                    oversText
+                  }} 
+                  className="text-white hover:underline bg-blue-700 dark:bg-blue-600 px-3 py-1 rounded-lg text-sm"
+                >
+                  View All Details
+                </Link>
               </div>
-            )}
+              <CardContent className="p-4 border-3 border-blue-300 dark:border-blue-700 dark:bg-gray-800">
+                {activeBatsmen.length === 0 ? (
+                  <div className="text-muted-foreground italic text-center p-4 text-lg">
+                    No batsmen selected yet
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 text-sm text-blue-700 dark:text-blue-300 px-2 font-semibold">
+                      <div className="col-span-4">Batsman</div>
+                      <div className="col-span-2 text-center">R</div>
+                      <div className="col-span-2 text-center">B</div>
+                      <div className="col-span-2 text-center">SR</div>
+                      <div className="col-span-1 text-center">4s</div>
+                      <div className="col-span-1 text-center">6s</div>
+                    </div>
+                    
+                    {activeBatsmen.map((b, i) => {
+                      if (!b) return null;
+                      const isStriker = b.name === striker;
+                      const strikeRate = b.balls > 0 ? ((b.runs / b.balls) * 100).toFixed(1) : "0.0";
+                      
+                      return (
+                        <div 
+                          key={i} 
+                          className={`grid grid-cols-12 p-2 rounded-md ${
+                            isStriker 
+                              ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-2 border-blue-300 dark:border-blue-700' 
+                              : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-2 border-green-300 dark:border-green-700'
+                          }`}
+                        >
+                          <div className="col-span-4 font-medium flex items-center text-xl">
+                            {b.name} 
+                            {isStriker && <Badge className="ml-1 bg-blue-500 text-white">*</Badge>}
+                          </div>
+                          <div className="col-span-2 text-center font-bold text-xl">{b.runs}</div>
+                          <div className="col-span-2 text-center text-xl">{b.balls}</div>
+                          <div className="col-span-2 text-center">{strikeRate}</div>
+                          <div className="col-span-1 text-center">
+                            <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-base">{b.fours}</Badge>
+                          </div>
+                          <div className="col-span-1 text-center">
+                            <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900 text-base">{b.sixes}</Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800">
+              <div className="bg-gradient-to-r from-green-600 to-green-800 dark:from-green-800 dark:to-green-900 text-white p-3 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Award className="h-6 w-6" />
+                  <h3 className="font-bold text-2xl">Current Bowler</h3>
+                </div>
+                <Link 
+                  to="/match-records" 
+                  state={{ 
+                    batsmen, 
+                    bowlersList, 
+                    teamAName, 
+                    teamBName, 
+                    outPlayers, 
+                    retiredHurtPlayers,
+                    gameTitle,
+                    totalRuns,
+                    wickets,
+                    totalOvers,
+                    totalBalls,
+                    crr,
+                    oversText
+                  }} 
+                  className="text-white hover:underline bg-green-700 dark:bg-green-600 px-3 py-1 rounded-lg text-sm"
+                >
+                  View All Details
+                </Link>
+              </div>
+              <CardContent className="p-4 border-3 border-green-300 dark:border-green-700 dark:bg-gray-800">
+                {!bowler ? (
+                  <div className="text-muted-foreground italic text-center p-4 text-lg">
+                    No bowler selected yet
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-10 text-sm text-green-700 dark:text-green-300 px-2 font-semibold">
+                      <div className="col-span-3">Bowler</div>
+                      <div className="col-span-2 text-center">O</div>
+                      <div className="col-span-1 text-center">M</div>
+                      <div className="col-span-1 text-center">R</div>
+                      <div className="col-span-1 text-center">W</div>
+                      <div className="col-span-2 text-center">Econ</div>
+                    </div>
+                    
+                    <div className="space-y-2 mt-2">
+                      {(() => {
+                        const economy = bowler.balls > 0 ? ((bowler.runs / (bowler.balls/6)) || 0).toFixed(1) : "0.0";
+                        
+                        return (
+                          <div className="grid grid-cols-10 p-2 rounded-md bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-2 border-green-300 dark:border-green-700">
+                            <div className="col-span-3 font-medium flex items-center text-xl">
+                              {bowler.name}
+                            </div>
+                            <div className="col-span-2 text-center text-xl">
+                              {Math.floor(bowler.balls/6)}.{bowler.balls%6}
+                            </div>
+                            <div className="col-span-1 text-center text-xl">{bowler.maidens}</div>
+                            <div className="col-span-1 text-center text-xl">{bowler.runs}</div>
+                            <div className="col-span-1 text-center font-bold text-xl">{bowler.wickets}</div>
+                            <div className="col-span-2 text-center">
+                              {economy}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
         
@@ -694,222 +734,74 @@ export default function Scoreboard({
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-800 dark:to-blue-900 text-white p-3 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Users className="h-6 w-6" />
-                <h3 className="font-bold text-2xl">Current Batsmen</h3>
-              </div>
-              <Link 
-                to="/match-records" 
-                state={{ 
-                  batsmen, 
-                  bowlersList, 
-                  teamAName, 
-                  teamBName, 
-                  outPlayers, 
-                  retiredHurtPlayers,
-                  gameTitle,
-                  totalRuns,
-                  wickets,
-                  totalOvers,
-                  totalBalls,
-                  crr,
-                  oversText
-                }} 
-                className="text-white hover:underline bg-blue-700 dark:bg-blue-600 px-3 py-1 rounded-lg text-sm"
-              >
-                View All Details
-              </Link>
-            </div>
-            <CardContent className="p-4 border-3 border-blue-300 dark:border-blue-700 dark:bg-gray-800">
-              {activeBatsmen.length === 0 ? (
-                <div className="text-muted-foreground italic text-center p-4 text-lg">
-                  No batsmen selected yet
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-12 text-sm text-blue-700 dark:text-blue-300 px-2 font-semibold">
-                    <div className="col-span-4">Batsman</div>
-                    <div className="col-span-2 text-center">R</div>
-                    <div className="col-span-2 text-center">B</div>
-                    <div className="col-span-2 text-center">SR</div>
-                    <div className="col-span-1 text-center">4s</div>
-                    <div className="col-span-1 text-center">6s</div>
-                  </div>
-                  
-                  {activeBatsmen.map((b, i) => {
-                    if (!b) return null;
-                    const isStriker = b.name === striker;
-                    const strikeRate = b.balls > 0 ? ((b.runs / b.balls) * 100).toFixed(1) : "0.0";
-                    
-                    return (
-                      <div 
-                        key={i} 
-                        className={`grid grid-cols-12 p-2 rounded-md ${
-                          isStriker 
-                            ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-2 border-blue-300 dark:border-blue-700' 
-                            : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-2 border-green-300 dark:border-green-700'
-                        }`}
-                      >
-                        <div className="col-span-4 font-medium flex items-center text-xl">
-                          {b.name} 
-                          {isStriker && <Badge className="ml-1 bg-blue-500 text-white">*</Badge>}
-                        </div>
-                        <div className="col-span-2 text-center font-bold text-xl">{b.runs}</div>
-                        <div className="col-span-2 text-center text-xl">{b.balls}</div>
-                        <div className="col-span-2 text-center">{strikeRate}</div>
-                        <div className="col-span-1 text-center">
-                          <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-base">{b.fours}</Badge>
-                        </div>
-                        <div className="col-span-1 text-center">
-                          <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900 text-base">{b.sixes}</Badge>
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-primary/30">
+              <CardContent className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-blue-200 dark:border-blue-800">
+                    <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1 mb-2 text-lg">
+                      <Award className="h-6 w-6 text-blue-800 dark:text-blue-300" />
+                      Top Performer
+                    </h3>
+                    {topScorer && topScorer.runs > 0 ? (
+                      <div className="text-center">
+                        <div className="font-bold text-xl">{topScorer.name}</div>
+                        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{topScorer.runs} <span className="text-md font-normal text-gray-500 dark:text-gray-400">({topScorer.balls} balls)</span></div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          SR: {((topScorer.runs / topScorer.balls) * 100).toFixed(1)} | 4s: {topScorer.fours} | 6s: {topScorer.sixes}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800">
-            <div className="bg-gradient-to-r from-green-600 to-green-800 dark:from-green-800 dark:to-green-900 text-white p-3 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Award className="h-6 w-6" />
-                <h3 className="font-bold text-2xl">Current Bowler</h3>
-              </div>
-              <Link 
-                to="/match-records" 
-                state={{ 
-                  batsmen, 
-                  bowlersList, 
-                  teamAName, 
-                  teamBName, 
-                  outPlayers, 
-                  retiredHurtPlayers,
-                  gameTitle,
-                  totalRuns,
-                  wickets,
-                  totalOvers,
-                  totalBalls,
-                  crr,
-                  oversText
-                }} 
-                className="text-white hover:underline bg-green-700 dark:bg-green-600 px-3 py-1 rounded-lg text-sm"
-              >
-                View All Details
-              </Link>
-            </div>
-            <CardContent className="p-4 border-3 border-green-300 dark:border-green-700 dark:bg-gray-800">
-              {!bowler ? (
-                <div className="text-muted-foreground italic text-center p-4 text-lg">
-                  No bowler selected yet
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-10 text-sm text-green-700 dark:text-green-300 px-2 font-semibold">
-                    <div className="col-span-3">Bowler</div>
-                    <div className="col-span-2 text-center">O</div>
-                    <div className="col-span-1 text-center">M</div>
-                    <div className="col-span-1 text-center">R</div>
-                    <div className="col-span-1 text-center">W</div>
-                    <div className="col-span-2 text-center">Econ</div>
+                    ) : (
+                      <div className="text-center text-gray-500 dark:text-gray-400 italic">No data available</div>
+                    )}
                   </div>
                   
-                  <div className="space-y-2 mt-2">
-                    {(() => {
-                      const economy = bowler.balls > 0 ? ((bowler.runs / (bowler.balls/6)) || 0).toFixed(1) : "0.0";
-                      
-                      return (
-                        <div className="grid grid-cols-10 p-2 rounded-md bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-2 border-green-300 dark:border-green-700">
-                          <div className="col-span-3 font-medium flex items-center text-xl">
-                            {bowler.name}
-                          </div>
-                          <div className="col-span-2 text-center text-xl">
-                            {Math.floor(bowler.balls/6)}.{bowler.balls%6}
-                          </div>
-                          <div className="col-span-1 text-center text-xl">{bowler.maidens}</div>
-                          <div className="col-span-1 text-center text-xl">{bowler.runs}</div>
-                          <div className="col-span-1 text-center font-bold text-xl">{bowler.wickets}</div>
-                          <div className="col-span-2 text-center">
-                            {economy}
-                          </div>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-green-200 dark:border-green-800">
+                    <h3 className="font-bold text-green-800 dark:text-green-300 flex items-center gap-1 mb-2 text-lg">
+                      <Trophy className="h-6 w-6 text-green-800 dark:text-green-300" />
+                      Best Bowler
+                    </h3>
+                    {bestBowler ? (
+                      <div className="text-center">
+                        <div className="font-bold text-xl">{bestBowler.name}</div>
+                        <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                          {bestBowler.wickets}-{bestBowler.runs} <span className="text-md font-normal text-gray-500 dark:text-gray-400">
+                            ({Math.floor(bestBowler.balls/6)}.{bestBowler.balls%6} overs)
+                          </span>
                         </div>
-                      );
-                    })()}
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          Economy: {((bestBowler.runs / (bestBowler.balls/6)) || 0).toFixed(2)}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-500 dark:text-gray-400 italic">No data available</div>
+                    )}
                   </div>
-                </>
-              )}
-            </CardContent>
+                  
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-purple-200 dark:border-purple-800">
+                    <h3 className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1 mb-2 text-lg">
+                      <Star className="h-6 w-6 text-purple-800 dark:text-purple-300" />
+                      Boundaries
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="text-center">
+                        <div className="text-sm font-medium text-blue-600 dark:text-blue-400">Fours</div>
+                        <div className="text-3xl font-bold">{batsmen.reduce((acc, b) => acc + b.fours, 0)}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm font-medium text-purple-600 dark:text-purple-400">Sixes</div>
+                        <div className="text-3xl font-bold">{batsmen.reduce((acc, b) => acc + b.sixes, 0)}</div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">
+                      {Math.round((batsmen.reduce((acc, b) => acc + (b.fours * 4) + (b.sixes * 6), 0) / Math.max(1, totalRuns)) * 100)}% 
+                      runs from boundaries
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </div>
           </Card>
         </div>
-
-        <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-primary/30">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-blue-200 dark:border-blue-800">
-                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1 mb-2 text-lg">
-                  <Award className="h-6 w-6 text-blue-800 dark:text-blue-300" />
-                  Top Performer
-                </h3>
-                {topScorer && topScorer.runs > 0 ? (
-                  <div className="text-center">
-                    <div className="font-bold text-xl">{topScorer.name}</div>
-                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{topScorer.runs} <span className="text-md font-normal text-gray-500 dark:text-gray-400">({topScorer.balls} balls)</span></div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      SR: {((topScorer.runs / topScorer.balls) * 100).toFixed(1)} | 4s: {topScorer.fours} | 6s: {topScorer.sixes}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-500 dark:text-gray-400 italic">No data available</div>
-                )}
-              </div>
-              
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-green-200 dark:border-green-800">
-                <h3 className="font-bold text-green-800 dark:text-green-300 flex items-center gap-1 mb-2 text-lg">
-                  <Trophy className="h-6 w-6 text-green-800 dark:text-green-300" />
-                  Best Bowler
-                </h3>
-                {bestBowler ? (
-                  <div className="text-center">
-                    <div className="font-bold text-xl">{bestBowler.name}</div>
-                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                      {bestBowler.wickets}-{bestBowler.runs} <span className="text-md font-normal text-gray-500 dark:text-gray-400">
-                        ({Math.floor(bestBowler.balls/6)}.{bestBowler.balls%6} overs)
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Economy: {((bestBowler.runs / (bestBowler.balls/6)) || 0).toFixed(2)}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-500 dark:text-gray-400 italic">No data available</div>
-                )}
-              </div>
-              
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-2 border-purple-200 dark:border-purple-800">
-                <h3 className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1 mb-2 text-lg">
-                  <Star className="h-6 w-6 text-purple-800 dark:text-purple-300" />
-                  Boundaries
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center">
-                    <div className="text-sm font-medium text-blue-600 dark:text-blue-400">Fours</div>
-                    <div className="text-3xl font-bold">{batsmen.reduce((acc, b) => acc + b.fours, 0)}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-medium text-purple-600 dark:text-purple-400">Sixes</div>
-                    <div className="text-3xl font-bold">{batsmen.reduce((acc, b) => acc + b.sixes, 0)}</div>
-                  </div>
-                </div>
-                <div className="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">
-                  {Math.round((batsmen.reduce((acc, b) => acc + (b.fours * 4) + (b.sixes * 6), 0) / Math.max(1, totalRuns)) * 100)}% 
-                  runs from boundaries
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </CardContent>
     </Card>
   );
