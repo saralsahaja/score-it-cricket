@@ -84,6 +84,11 @@ export default function MatchControl({
 
   // Check conditions for blocking run updates
   const isRunUpdateBlocked = () => {
+    // Block if no striker or non-striker is selected
+    if (!striker || !nonStriker) {
+      return {blocked: true, message: "Please select both batsmen first"};
+    }
+    
     // Block if over is complete and no bowler is selected
     if (isOverComplete && !currentBowler) {
       return {blocked: true, message: "Please select a bowler for the new over first"};

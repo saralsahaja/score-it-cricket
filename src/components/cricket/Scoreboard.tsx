@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +79,7 @@ export default function Scoreboard({
   const [showLatestBallInfo, setShowLatestBallInfo] = useState(false);
   const [showTotalRuns, setShowTotalRuns] = useState(true);
   const [showBallsPopover, setShowBallsPopover] = useState(false);
+  const [animatingBall, setAnimatingBall] = useState<string | null>(null);
   
   // State for cycling display types
   const [displayInfoType, setDisplayInfoType] = useState<'reqRate' | 'toWin' | 'partnership'>(isSecondInnings ? 'reqRate' : 'partnership');
@@ -160,15 +162,21 @@ export default function Scoreboard({
     return () => clearInterval(interval);
   }, []);
 
-  // Only update the latest ball info without animations
+  // Only update the latest ball info with animations
   useEffect(() => {
     if (recentBalls.length > 0) {
       const latestBall = recentBalls[recentBalls.length - 1];
       setLatestBall(latestBall);
       
-      // Show the latest ball info briefly
+      // Show the latest ball info briefly with animation
       setShowLatestBallInfo(true);
       setShowTotalRuns(false);
+      setAnimatingBall(latestBall);
+      
+      // Reset animation after 1 second to show total runs
+      setTimeout(() => {
+        setAnimatingBall(null);
+      }, 1000);
       
       // Show total runs again after 3 seconds
       setTimeout(() => {
@@ -241,8 +249,8 @@ export default function Scoreboard({
     
     // Process balls in reverse order (newest first)
     for (let i = recentBalls.length - 1; i >= 0; i--) {
-      const ballIndexInMatch = totalBalls - (recentBalls.length - 1 - i);
-      const overNumber = Math.floor(ballIndexInMatch / 6);
+      const ballIndexInMatch = i + 1;
+      const overNumber = Math.floor((totalBalls - (recentBalls.length - ballIndexInMatch)) / 6) + 1;
       
       if (!groupedBalls[overNumber]) {
         groupedBalls[overNumber] = [];
@@ -256,7 +264,7 @@ export default function Scoreboard({
   };
   
   const groupedBalls = groupBallsByOver();
-  const currentOverNumber = Math.floor(totalBalls / 6);
+  const currentOverNumber = Math.floor(totalBalls / 6) + 1;
   
   // Create a more attractive ball-by-ball display with over breaks
   const renderBallByBallPopover = () => {
@@ -322,41 +330,149 @@ export default function Scoreboard({
     );
   };
   
-  // Simple ball rendering without animations for the main view
+  // Organize last 12 balls into current over and previous over
   const renderLastTwelveBalls = () => {
     const last12Balls = recentBalls.slice(-12);
+    const ballsInCurrentOver = totalBalls % 6; // 0 means over just completed
+    
+    // If current over is empty (just completed), show previous two overs
+    const currentOverBalls = ballsInCurrentOver === 0 
+      ? [] 
+      : last12Balls.slice(-ballsInCurrentOver);
+      
+    const previousOverBalls = ballsInCurrentOver === 0
+      ? last12Balls.slice(-12, -6) // Last complete over
+      : last12Balls.slice(0, -ballsInCurrentOver); // Balls before current over
     
     return (
-      <div className="flex flex-wrap gap-2 justify-start items-center w-full">
-        {last12Balls.map((ball, idx) => {
-          // Style based on ball value
-          let ballStyle = "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg";
-          
-          if (ball === 'W') {
-            ballStyle += " bg-red-600 text-white";
-          } else if (ball === '4') {
-            ballStyle += " bg-blue-500 text-white";
-          } else if (ball === '6') {
-            ballStyle += " bg-purple-600 text-white";
-          } else if (ball === '0') {
-            ballStyle += " bg-gray-400 dark:bg-gray-600 text-white";
-          } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
-            ballStyle += " bg-yellow-500 text-white";
-          } else {
-            ballStyle += " bg-green-500 text-white";
-          }
-          
-          // Highlight the latest ball
-          if (idx === last12Balls.length - 1) {
-            ballStyle += " ring-2 ring-yellow-300 dark:ring-yellow-500";
-          }
-          
-          return (
-            <div key={`ball-${idx}`} className={ballStyle}>
-              {ball}
+      <div className="space-y-3 w-full">
+        {/* Current Over */}
+        {currentOverBalls.length > 0 && (
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold text-blue-600 mb-1">Current Over {currentOverNumber}</span>
+            <div className="flex flex-wrap gap-2">
+              {currentOverBalls.map((ball, idx) => {
+                // Style based on ball value
+                let ballStyle = "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg";
+                
+                if (ball === 'W') {
+                  ballStyle += " bg-red-600 text-white";
+                } else if (ball === '4') {
+                  ballStyle += " bg-blue-500 text-white";
+                } else if (ball === '6') {
+                  ballStyle += " bg-purple-600 text-white";
+                } else if (ball === '0') {
+                  ballStyle += " bg-gray-400 dark:bg-gray-600 text-white";
+                } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
+                  ballStyle += " bg-yellow-500 text-white";
+                } else {
+                  ballStyle += " bg-green-500 text-white";
+                }
+                
+                // Highlight the latest ball
+                if (idx === currentOverBalls.length - 1) {
+                  ballStyle += " ring-2 ring-yellow-300 dark:ring-yellow-500";
+                }
+                
+                return (
+                  <div key={`current-ball-${idx}`} className={ballStyle}>
+                    {ball}
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        )}
+        
+        {/* Previous Over */}
+        {previousOverBalls.length > 0 && (
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold text-gray-600 mb-1">
+              Previous Over {currentOverNumber - (currentOverBalls.length > 0 ? 1 : 0)}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {previousOverBalls.slice(-6).map((ball, idx) => {
+                // Style based on ball value
+                let ballStyle = "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg opacity-80";
+                
+                if (ball === 'W') {
+                  ballStyle += " bg-red-600 text-white";
+                } else if (ball === '4') {
+                  ballStyle += " bg-blue-500 text-white";
+                } else if (ball === '6') {
+                  ballStyle += " bg-purple-600 text-white";
+                } else if (ball === '0') {
+                  ballStyle += " bg-gray-400 dark:bg-gray-600 text-white";
+                } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
+                  ballStyle += " bg-yellow-500 text-white";
+                } else {
+                  ballStyle += " bg-green-500 text-white";
+                }
+                
+                return (
+                  <div key={`prev-ball-${idx}`} className={ballStyle}>
+                    {ball}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  // Create animated ball for latest update
+  const renderAnimatedBallUpdate = () => {
+    if (!animatingBall) return null;
+    
+    // Define style based on ball value
+    let ballClass = "w-full h-full rounded-lg flex items-center justify-center transition-all duration-500 animate-scale-in";
+    let textColor = "text-white";
+    let bgColor = "";
+    let icon = null;
+    
+    switch (animatingBall) {
+      case 'W':
+        bgColor = "bg-gradient-to-r from-red-600 to-red-700";
+        textColor = "text-white font-bold";
+        break;
+      case '4':
+        bgColor = "bg-gradient-to-r from-blue-500 to-blue-600";
+        textColor = "text-white font-bold";
+        break;
+      case '6':
+        bgColor = "bg-gradient-to-r from-purple-600 to-purple-700";
+        textColor = "text-white font-bold";
+        break;
+      case '0':
+        bgColor = "bg-gradient-to-r from-gray-500 to-gray-600";
+        textColor = "text-white";
+        break;
+      case 'WD':
+        bgColor = "bg-gradient-to-r from-yellow-500 to-yellow-600";
+        textColor = "text-white font-bold";
+        break;
+      case 'NB':
+        bgColor = "bg-gradient-to-r from-orange-500 to-orange-600";
+        textColor = "text-white font-bold";
+        break;
+      case 'LB':
+      case 'OT':
+        bgColor = "bg-gradient-to-r from-amber-500 to-amber-600";
+        textColor = "text-white font-bold";
+        break;
+      default:
+        bgColor = "bg-gradient-to-r from-green-500 to-green-600";
+        textColor = "text-white font-bold";
+    }
+    
+    return (
+      <div className={`${ballClass} ${bgColor} px-4 py-2 shadow-lg min-w-[300px] max-w-[300px] h-[75px]`}>
+        <div className={`flex flex-col items-center justify-center ${textColor}`}>
+          <div className="text-2xl font-bold">{animatingBall}</div>
+          <div className="text-sm mt-1">{getLatestBallDescription()}</div>
+        </div>
       </div>
     );
   };
@@ -400,13 +516,11 @@ export default function Scoreboard({
                 </div>
               )}
               
-              {/* Latest ball information - simplified */}
+              {/* Latest ball information with eye-catching animation */}
               {showLatestBallInfo && latestBall && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-blue-500 rounded-lg p-3 shadow-lg w-full max-w-[300px] animate-fade-in">
-                    <div className="text-lg font-bold text-white text-center">
-                      {getLatestBallDescription()}
-                    </div>
+                  <div className="w-[300px] h-[75px] animate-fade-in">
+                    {renderAnimatedBallUpdate()}
                   </div>
                 </div>
               )}
@@ -434,7 +548,7 @@ export default function Scoreboard({
           {/* Ball by Ball section with popup feature */}
           <div className="mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-4 shadow-md border border-gray-300 dark:border-gray-700">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold">Last 12 Balls</span>
+              <span className="text-sm font-semibold">Ball-by-Ball</span>
               <Dialog open={showBallsPopover} onOpenChange={setShowBallsPopover}>
                 <DialogTrigger asChild>
                   <button 
