@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -80,7 +81,7 @@ export default function Scoreboard({
   const [showBallsPopover, setShowBallsPopover] = useState(false);
   const [animatingBall, setAnimatingBall] = useState<string | null>(null);
   
-  // State for cycling display types
+  // State for cycling display types - now set to a fixed value
   const [displayInfoType, setDisplayInfoType] = useState<'reqRate' | 'toWin' | 'partnership'>(isSecondInnings ? 'reqRate' : 'partnership');
   
   // State for cycling match info
@@ -129,38 +130,7 @@ export default function Scoreboard({
   // Calculate partnership runs
   const partnershipRuns = activeBatsmen.reduce((total, batter) => total + (batter?.runs || 0), 0);
   const partnershipBalls = activeBatsmen.reduce((total, batter) => total + (batter?.balls || 0), 0);
-
-  // Cycle between different information displays
-  useEffect(() => {
-    if (!isSecondInnings) {
-      setDisplayInfoType('partnership');
-      return;
-    }
-    
-    const interval = setInterval(() => {
-      setDisplayInfoType(current => {
-        if (current === 'reqRate') return 'toWin';
-        if (current === 'toWin') return 'partnership';
-        return 'reqRate';
-      });
-    }, 5000); // Change display every 5 seconds
-    
-    return () => clearInterval(interval);
-  }, [isSecondInnings]);
   
-  // Cycle between different match info displays (toss, last wicket, best bowler)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMatchInfoType(current => {
-        if (current === 'toss') return 'lastWicket';
-        if (current === 'lastWicket') return 'bestBowler';
-        return 'toss';
-      });
-    }, 4000); // Change match info display every 4 seconds
-    
-    return () => clearInterval(interval);
-  }, []);
-
   // Only update the latest ball info with animations - with extended 4 second duration
   useEffect(() => {
     if (recentBalls.length > 0) {
@@ -488,38 +458,97 @@ export default function Scoreboard({
     );
   };
   
+  // Render the key match stats section (run rate, required rate, etc.)
+  const renderMatchStats = () => {
+    if (isSecondInnings && displayInfoType === 'reqRate') {
+      return (
+        <div className="grid grid-cols-3 gap-3 bg-gray-100 dark:bg-gray-800 rounded-lg p-3 mt-2">
+          <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+            <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">CURR RR</div>
+            <div className="text-lg font-bold">{crr}</div>
+          </div>
+          <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+            <div className="text-xs text-purple-600 dark:text-purple-400 font-medium">REQ RR</div>
+            <div className="text-lg font-bold">{rrr}</div>
+          </div>
+          <div className="text-center p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+            <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">TARGET</div>
+            <div className="text-lg font-bold">{target}</div>
+          </div>
+        </div>
+      );
+    } else if (isSecondInnings && displayInfoType === 'toWin') {
+      return (
+        <div className="grid grid-cols-2 gap-3 bg-gray-100 dark:bg-gray-800 rounded-lg p-3 mt-2">
+          <div className="text-center p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
+            <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">RUNS TO WIN</div>
+            <div className="text-lg font-bold">{runsLeft}</div>
+          </div>
+          <div className="text-center p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
+            <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">BALLS LEFT</div>
+            <div className="text-lg font-bold">{ballsLeft}</div>
+          </div>
+        </div>
+      );
+    } else {
+      // Partnership display for first innings or when partnership is selected
+      return (
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 mt-2">
+          <div className="text-center">
+            <div className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-1">CURRENT PARTNERSHIP</div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">RUNS</div>
+                <div className="text-lg font-bold">{partnershipRuns}</div>
+              </div>
+              <div className="text-center p-2 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                <div className="text-xs text-green-600 dark:text-green-400 font-medium">BALLS</div>
+                <div className="text-lg font-bold">{partnershipBalls}</div>
+              </div>
+            </div>
+            {partnershipBalls > 0 && (
+              <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                SR: {((partnershipRuns / partnershipBalls) * 100).toFixed(1)}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+  };
+  
   return (
-    <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden dark:bg-gray-800 relative">
-      <CardContent className="space-y-6 p-6">
+    <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden dark:bg-gray-800 relative max-w-full w-full mx-auto">
+      <CardContent className="p-4 md:p-6">
         <div className="flex items-center justify-center gap-2 mb-4">
           <LineChart className="h-7 w-7 text-primary" />
-          <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
+          <h2 className="text-2xl md:text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
             {gameTitle}
           </h2>
         </div>
         
-        <div className="bg-gradient-to-r from-blue-100 via-purple-100 to-blue-100 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-blue-900/40 rounded-lg p-6 border-2 border-primary">
-          <div className="flex items-center justify-between mb-6">
-            {/* Always show batting team on the left */}
-            <div className="flex items-center gap-2">
-              <Avatar className="h-16 w-16 bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-300 dark:border-blue-700 rounded-full">
+        <div className="bg-gradient-to-r from-blue-100 via-purple-100 to-blue-100 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-blue-900/40 rounded-lg p-4 md:p-6 border-2 border-primary">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-4 md:mb-6 gap-4">
+            {/* Batting team */}
+            <div className="flex items-center gap-2 order-1 md:order-1 w-full md:w-auto">
+              <Avatar className="h-12 w-12 md:h-16 md:w-16 bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-300 dark:border-blue-700 rounded-full">
                 {battingTeamLogo ? (
                   <AvatarImage src={battingTeamLogo} alt={battingTeam} />
                 ) : (
                   <AvatarFallback className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 font-bold text-2xl">{battingTeam.charAt(0)}</AvatarFallback>
                 )}
               </Avatar>
-              <div className="font-bold text-2xl text-blue-800 dark:text-blue-300">
+              <div className="font-bold text-xl md:text-2xl text-blue-800 dark:text-blue-300">
                 {battingTeam}
               </div>
             </div>
             
-            {/* FIXED: Ensure consistent height and prevent overlapping */}
-            <div className="text-center relative w-[300px] h-[120px] flex items-center justify-center">
+            {/* Score display - fixed height */}
+            <div className="text-center relative w-full md:w-[300px] h-[100px] flex items-center justify-center order-3 md:order-2">
               {/* Display total runs/wickets WITH OVERS COUNT */}
               {showTotalRuns && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-5xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
+                  <div className="text-4xl md:text-5xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
                     {totalRuns}/{wickets}
                     <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
                       Over: {oversText}
@@ -528,7 +557,7 @@ export default function Scoreboard({
                 </div>
               )}
               
-              {/* FIXED: Latest ball information with eye-catching animation in fixed position */}
+              {/* Latest ball information with eye-catching animation in fixed position */}
               {showLatestBallInfo && latestBall && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   {renderAnimatedBallUpdate()}
@@ -536,11 +565,12 @@ export default function Scoreboard({
               )}
             </div>
             
-            <div className="flex items-center gap-2">
-              <div className="font-bold text-2xl text-purple-800 dark:text-purple-300">
+            {/* Bowling team */}
+            <div className="flex items-center gap-2 order-2 md:order-3 w-full md:w-auto justify-end">
+              <div className="font-bold text-xl md:text-2xl text-purple-800 dark:text-purple-300">
                 {bowlingTeam}
               </div>
-              <Avatar className="h-16 w-16 bg-purple-100 dark:bg-purple-900/50 border-2 border-purple-300 dark:border-purple-700 rounded-full">
+              <Avatar className="h-12 w-12 md:h-16 md:w-16 bg-purple-100 dark:bg-purple-900/50 border-2 border-purple-300 dark:border-purple-700 rounded-full">
                 {bowlingTeamLogo ? (
                   <AvatarImage src={bowlingTeamLogo} alt={bowlingTeam} />
                 ) : (
@@ -549,6 +579,9 @@ export default function Scoreboard({
               </Avatar>
             </div>
           </div>
+          
+          {/* Match stats section - Run Rate, Partnership, etc. */}
+          {renderMatchStats()}
           
           {/* Add match information cycling display */}
           <div className="mb-4 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg text-center font-medium min-h-[40px]">
@@ -577,12 +610,12 @@ export default function Scoreboard({
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800">
               <div className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-800 dark:to-blue-900 text-white p-3 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <Users className="h-6 w-6" />
-                  <h3 className="font-bold text-2xl">Current Batsmen</h3>
+                  <Users className="h-5 w-5 md:h-6 md:w-6" />
+                  <h3 className="font-bold text-xl md:text-2xl">Current Batsmen</h3>
                 </div>
                 <Link 
                   to="/match-records" 
@@ -636,12 +669,12 @@ export default function Scoreboard({
                               : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-2 border-green-300 dark:border-green-700'
                           }`}
                         >
-                          <div className="col-span-4 font-medium flex items-center text-xl">
+                          <div className="col-span-4 font-medium flex items-center text-base md:text-xl">
                             {b.name} 
                             {isStriker && <Badge className="ml-1 bg-blue-500 text-white">*</Badge>}
                           </div>
-                          <div className="col-span-2 text-center font-bold text-xl">{b.runs}</div>
-                          <div className="col-span-2 text-center text-xl">{b.balls}</div>
+                          <div className="col-span-2 text-center font-bold text-base md:text-xl">{b.runs}</div>
+                          <div className="col-span-2 text-center text-base md:text-xl">{b.balls}</div>
                           <div className="col-span-2 text-center">{strikeRate}</div>
                           <div className="col-span-1 text-center">
                             <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-base">{b.fours}</Badge>
@@ -660,8 +693,8 @@ export default function Scoreboard({
             <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800">
               <div className="bg-gradient-to-r from-green-600 to-green-800 dark:from-green-800 dark:to-green-900 text-white p-3 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <Award className="h-6 w-6" />
-                  <h3 className="font-bold text-2xl">Current Bowler</h3>
+                  <Award className="h-5 w-5 md:h-6 md:w-6" />
+                  <h3 className="font-bold text-xl md:text-2xl">Current Bowler</h3>
                 </div>
                 <Link 
                   to="/match-records" 
@@ -707,15 +740,15 @@ export default function Scoreboard({
                         
                         return (
                           <div className="grid grid-cols-10 p-2 rounded-md bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-2 border-green-300 dark:border-green-700">
-                            <div className="col-span-3 font-medium flex items-center text-xl">
+                            <div className="col-span-3 font-medium flex items-center text-base md:text-xl">
                               {bowler.name}
                             </div>
-                            <div className="col-span-2 text-center text-xl">
+                            <div className="col-span-2 text-center text-base md:text-xl">
                               {Math.floor(bowler.balls/6)}.{bowler.balls%6}
                             </div>
-                            <div className="col-span-1 text-center text-xl">{bowler.maidens}</div>
-                            <div className="col-span-1 text-center text-xl">{bowler.runs}</div>
-                            <div className="col-span-1 text-center font-bold text-xl">{bowler.wickets}</div>
+                            <div className="col-span-1 text-center text-base md:text-xl">{bowler.maidens}</div>
+                            <div className="col-span-1 text-center text-base md:text-xl">{bowler.runs}</div>
+                            <div className="col-span-1 text-center font-bold text-base md:text-xl">{bowler.wickets}</div>
                             <div className="col-span-2 text-center">
                               {economy}
                             </div>
@@ -730,132 +763,129 @@ export default function Scoreboard({
           </div>
         </div>
         
-        <Separator className="border-2 border-primary/20 rounded-full" />
+        <Separator className="border-2 border-primary/20 rounded-full my-4" />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800">
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-primary/30 rounded-lg">
-              <CardContent className="p-4">
-                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-4 text-xl">
-                  <Trophy className="h-6 w-6 text-blue-800 dark:text-blue-300" />
-                  Top Performances
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Top Scorer */}
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg p-4 shadow-md border-2 border-blue-200 dark:border-blue-800 transform transition-transform hover:scale-105">
-                    <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1 mb-2 text-base">
-                      <Award className="h-5 w-5 text-blue-700 dark:text-blue-300" />
-                      Top Scorer
-                    </h3>
-                    <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-800/80">
-                      {topScorer && topScorer.runs > 0 ? (
-                        <>
-                          <div className="font-bold text-xl text-blue-900 dark:text-blue-300">{topScorer.name}</div>
-                          <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{topScorer.runs}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            ({topScorer.balls} balls)
+        {/* Top performances section - updated to be full width and responsive */}
+        <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800 w-full">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-primary/30 rounded-lg">
+            <CardContent className="p-4">
+              <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-4 text-xl">
+                <Trophy className="h-6 w-6 text-blue-800 dark:text-blue-300" />
+                Top Performances
+              </h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {/* Top Scorer */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg p-4 shadow-md border-2 border-blue-200 dark:border-blue-800 transform transition-transform hover:scale-105">
+                  <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1 mb-2 text-base">
+                    <Award className="h-5 w-5 text-blue-700 dark:text-blue-300" />
+                    Top Scorer
+                  </h3>
+                  <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-800/80">
+                    {topScorer && topScorer.runs > 0 ? (
+                      <>
+                        <div className="font-bold text-xl text-blue-900 dark:text-blue-300">{topScorer.name}</div>
+                        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{topScorer.runs}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          ({topScorer.balls} balls)
+                        </div>
+                        <div className="flex justify-center items-center gap-3 mt-2">
+                          <div className="flex flex-col items-center">
+                            <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-base px-2">{topScorer.fours}</Badge>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">4s</span>
                           </div>
-                          <div className="flex justify-center items-center gap-3 mt-2">
-                            <div className="flex flex-col items-center">
-                              <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-base px-2">{topScorer.fours}</Badge>
-                              <span className="text-xs text-gray-600 dark:text-gray-400">4s</span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                              <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900 text-base px-2">{topScorer.sixes}</Badge>
-                              <span className="text-xs text-gray-600 dark:text-gray-400">6s</span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                              <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-base px-2">
-                                {((topScorer.runs / topScorer.balls) * 100).toFixed(1)}
-                              </Badge>
-                              <span className="text-xs text-gray-600 dark:text-gray-400">SR</span>
-                            </div>
+                          <div className="flex flex-col items-center">
+                            <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900 text-base px-2">{topScorer.sixes}</Badge>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">6s</span>
                           </div>
-                        </>
-                      ) : (
-                        <div className="text-center text-gray-500 dark:text-gray-400 italic py-8">No data available</div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Best Bowler */}
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-4 shadow-md border-2 border-green-200 dark:border-green-800 transform transition-transform hover:scale-105">
-                    <h3 className="font-bold text-green-800 dark:text-green-300 flex items-center gap-1 mb-2 text-base">
-                      <Trophy className="h-5 w-5 text-green-700 dark:text-green-300" />
-                      Best Bowler
-                    </h3>
-                    <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-800/80">
-                      {bestBowler ? (
-                        <>
-                          <div className="font-bold text-xl text-green-900 dark:text-green-300">{bestBowler.name}</div>
-                          <div className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">
-                            {bestBowler.wickets}-{bestBowler.runs}
-                          </div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            ({Math.floor(bestBowler.balls/6)}.{bestBowler.balls%6} overs)
-                          </div>
-                          <div className="flex justify-center items-center gap-3 mt-2">
-                            <div className="flex flex-col items-center">
-                              <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-base px-2">
-                                {((bestBowler.runs / (bestBowler.balls/6)) || 0).toFixed(1)}
-                              </Badge>
-                              <span className="text-xs text-gray-600 dark:text-gray-400">Econ</span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                              <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900 text-base px-2">
-                                {bestBowler.maidens}
-                              </Badge>
-                              <span className="text-xs text-gray-600 dark:text-gray-400">Mdns</span>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-center text-gray-500 dark:text-gray-400 italic py-8">No data available</div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Boundaries */}
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-lg p-4 shadow-md border-2 border-purple-200 dark:border-purple-800 transform transition-transform hover:scale-105">
-                    <h3 className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1 mb-2 text-base">
-                      <Star className="h-5 w-5 text-purple-700 dark:text-purple-300" />
-                      Boundaries
-                    </h3>
-                    <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-800/80">
-                      <div className="grid grid-cols-2 gap-4 mt-1">
-                        <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg">
-                          <div className="text-sm font-medium text-blue-600 dark:text-blue-400">Fours</div>
-                          <div className="text-3xl font-bold text-blue-700 dark:text-blue-300">
-                            {batsmen.reduce((acc, b) => acc + b.fours, 0)}
+                          <div className="flex flex-col items-center">
+                            <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-base px-2">
+                              {((topScorer.runs / topScorer.balls) * 100).toFixed(1)}
+                            </Badge>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">SR</span>
                           </div>
                         </div>
-                        <div className="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg">
-                          <div className="text-sm font-medium text-purple-600 dark:text-purple-400">Sixes</div>
-                          <div className="text-3xl font-bold text-purple-700 dark:text-purple-300">
-                            {batsmen.reduce((acc, b) => acc + b.sixes, 0)}
+                      </>
+                    ) : (
+                      <div className="text-center text-gray-500 dark:text-gray-400 italic py-8">No data available</div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Best Bowler */}
+                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-4 shadow-md border-2 border-green-200 dark:border-green-800 transform transition-transform hover:scale-105">
+                  <h3 className="font-bold text-green-800 dark:text-green-300 flex items-center gap-1 mb-2 text-base">
+                    <Trophy className="h-5 w-5 text-green-700 dark:text-green-300" />
+                    Best Bowler
+                  </h3>
+                  <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-800/80">
+                    {bestBowler ? (
+                      <>
+                        <div className="font-bold text-xl text-green-900 dark:text-green-300">{bestBowler.name}</div>
+                        <div className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">
+                          {bestBowler.wickets}-{bestBowler.runs}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          ({Math.floor(bestBowler.balls/6)}.{bestBowler.balls%6} overs)
+                        </div>
+                        <div className="flex justify-center items-center gap-3 mt-2">
+                          <div className="flex flex-col items-center">
+                            <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-base px-2">
+                              {((bestBowler.runs / (bestBowler.balls/6)) || 0).toFixed(1)}
+                            </Badge>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">Econ</span>
                           </div>
+                          <div className="flex flex-col items-center">
+                            <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900 text-base px-2">
+                              {bestBowler.maidens}
+                            </Badge>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">Mdns</span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center text-gray-500 dark:text-gray-400 italic py-8">No data available</div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Boundaries */}
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-lg p-4 shadow-md border-2 border-purple-200 dark:border-purple-800 transform transition-transform hover:scale-105">
+                  <h3 className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1 mb-2 text-base">
+                    <Star className="h-5 w-5 text-purple-700 dark:text-purple-300" />
+                    Boundaries
+                  </h3>
+                  <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-800/80">
+                    <div className="grid grid-cols-2 gap-4 mt-1">
+                      <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg">
+                        <div className="text-sm font-medium text-blue-600 dark:text-blue-400">Fours</div>
+                        <div className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                          {batsmen.reduce((acc, b) => acc + b.fours, 0)}
                         </div>
                       </div>
-                      <div className="mt-3 p-2 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
-                        <div className="text-sm text-center font-medium">
-                          <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                            {Math.round((batsmen.reduce((acc, b) => acc + (b.fours * 4) + (b.sixes * 6), 0) / Math.max(1, totalRuns)) * 100)}%
-                          </span>
-                          <span className="text-gray-600 dark:text-gray-400 ml-1">
-                            runs from boundaries
-                          </span>
+                      <div className="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg">
+                        <div className="text-sm font-medium text-purple-600 dark:text-purple-400">Sixes</div>
+                        <div className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+                          {batsmen.reduce((acc, b) => acc + b.sixes, 0)}
                         </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 p-2 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+                      <div className="text-sm text-center font-medium">
+                        <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                          {Math.round((batsmen.reduce((acc, b) => acc + (b.fours * 4) + (b.sixes * 6), 0) / Math.max(1, totalRuns)) * 100)}%
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-400 ml-1">
+                          runs from boundaries
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </div>
-          </Card>
-          
-          {/* Optional: Add another card here for additional stats if needed */}
-        </div>
+              </div>
+            </CardContent>
+          </div>
+        </Card>
       </CardContent>
     </Card>
   );
