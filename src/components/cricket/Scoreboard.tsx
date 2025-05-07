@@ -1,4 +1,85 @@
+import React from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 
+interface ScoreboardProps {
+  totalRuns: number;
+  wickets: number;
+  totalBalls: number;
+  crr: string;
+  target: number;
+  rrr: string;
+  runsLeft: number;
+  ballsLeft: number;
+  batsmen: {
+    name: string;
+    runs: number;
+    balls: number;
+    fours: number;
+    sixes: number;
+  }[];
+  bowler: {
+    name: string;
+    runs: number;
+    balls: number;
+    wickets: number;
+    maidens: number;
+  } | null;
+  striker: string | null;
+  nonStriker: string | null;
+  teamAName: string;
+  teamBName: string;
+  teamALogo: string | null;
+  teamBLogo: string | null;
+  isSecondInnings: boolean;
+  bowlersList: {
+    name: string;
+    runs: number;
+    balls: number;
+    wickets: number;
+    maidens: number;
+  }[];
+  recentBalls: string[];
+  setTeamAName: React.Dispatch<React.SetStateAction<string>>;
+  setTeamBName: React.Dispatch<React.SetStateAction<string>>;
+  totalOvers: number;
+  gameTitle: string;
+  outPlayers: string[];
+  retiredHurtPlayers: string[];
+  lastWicketType: string;
+  tossWinner?: string;
+  tossDecision?: "bat" | "bowl";
+}
+
+const Scoreboard: React.FC<ScoreboardProps> = ({ 
+  totalRuns, 
+  wickets, 
+  totalBalls, 
+  crr,
+  target,
+  rrr,
+  runsLeft,
+  ballsLeft,
+  batsmen,
+  bowler,
+  striker,
+  nonStriker,
+  teamAName,
+  teamBName,
+  teamALogo,
+  teamBLogo,
+  isSecondInnings,
+  bowlersList,
+  recentBalls,
+  setTeamAName,
+  setTeamBName,
+  totalOvers,
+  gameTitle,
+  outPlayers,
+  retiredHurtPlayers,
+  lastWicketType,
+  tossWinner,
+  tossDecision
+}) => {
   // Simple ball rendering without animations for the main view
   const renderLastTwelveBalls = () => {
     const last12Balls = recentBalls.slice(-12);
@@ -37,3 +118,18 @@
       </div>
     );
   };
+  
+  return (
+    <div>
+      {/* Render your scoreboard content here */}
+      <Card className="shadow-md mb-6">
+        <CardContent className="p-6">
+          <h2 className="text-2xl font-bold mb-4">Recent Balls</h2>
+          {renderLastTwelveBalls()}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default Scoreboard;
