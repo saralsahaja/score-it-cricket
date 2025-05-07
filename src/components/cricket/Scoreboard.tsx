@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -104,10 +105,7 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
             ballStyle += " bg-green-500 text-white";
           }
           
-          // Highlight the latest ball
-          if (idx === last12Balls.length - 1) {
-            ballStyle += " ring-2 ring-yellow-300 dark:ring-yellow-500";
-          }
+          // Removed the highlighting of the latest ball
           
           return (
             <div key={`ball-${idx}`} className={ballStyle}>
