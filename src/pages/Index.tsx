@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -84,7 +83,6 @@ export default function Index() {
   
   // Store first innings team info to swap roles
   const [firstInningsBattingTeam, setFirstInningsBattingTeam] = useState<string | null>(null);
-  const [firstInningsBowlingTeam, setFirstInningsBowlingTeam] = useState<string | null>(null);
   
   // Store game state in sessionStorage to preserve it when navigating
   useEffect(() => {
@@ -125,7 +123,6 @@ export default function Index() {
         setIsSecondInnings(parsedState.isSecondInnings || false);
         setRecentBalls(parsedState.recentBalls || []);
         setFirstInningsBattingTeam(parsedState.firstInningsBattingTeam || null);
-        setFirstInningsBowlingTeam(parsedState.firstInningsBowlingTeam || null);
         
         // Don't restore activeTab - leave it at default or admin status
       } catch (error) {
@@ -154,7 +151,7 @@ export default function Index() {
       batsmen, bowler, bowlersList, striker, nonStriker, currentBowler,
       isOverComplete, outPlayers, retiredHurtPlayers, lastWicketType,
       totalRuns, totalBalls, wickets, firstInningsScore, isSecondInnings, 
-      recentBalls, firstInningsBattingTeam, firstInningsBowlingTeam
+      recentBalls, firstInningsBattingTeam
     };
     
     sessionStorage.setItem('cricketGameState', JSON.stringify(gameState));
@@ -164,7 +161,7 @@ export default function Index() {
     batsmen, bowler, bowlersList, striker, nonStriker, currentBowler,
     isOverComplete, outPlayers, retiredHurtPlayers, lastWicketType,
     totalRuns, totalBalls, wickets, firstInningsScore, isSecondInnings, 
-    recentBalls, firstInningsBattingTeam, firstInningsBowlingTeam
+    recentBalls, firstInningsBattingTeam
   ]);
 
   useEffect(() => {
@@ -176,22 +173,12 @@ export default function Index() {
           duration: 5000,
         });
         
-        // Determine current batting and bowling teams
-        let battingTeam, bowlingTeam;
-        
+        // Store first innings batting team
         if (tossInfo) {
-          battingTeam = tossInfo.decision === "bat" ? tossInfo.winner : 
+          const firstInningsBattingTeamName = tossInfo.decision === "bat" ? tossInfo.winner : 
             (tossInfo.winner === teamAName ? teamBName : teamAName);
-          bowlingTeam = battingTeam === teamAName ? teamBName : teamAName;
-        } else {
-          // Default if no toss info
-          battingTeam = teamAName;
-          bowlingTeam = teamBName;
+          setFirstInningsBattingTeam(firstInningsBattingTeamName);
         }
-        
-        // Store first innings teams
-        setFirstInningsBattingTeam(battingTeam);
-        setFirstInningsBowlingTeam(bowlingTeam);
         
         setFirstInningsScore(totalRuns);
         setIsSecondInnings(true);
@@ -224,10 +211,6 @@ export default function Index() {
         setBowlersList(newBowlers);
         
         setRecentBalls([]);
-        
-        toast.success(`Teams switched: ${bowlingTeam} now batting, ${battingTeam} now bowling`, {
-          duration: 5000,
-        });
       }
     }
   }, [wickets, totalBalls, isSecondInnings, totalOvers, tossInfo, teamAName, teamBName]);
@@ -340,36 +323,20 @@ export default function Index() {
     }
   };
 
-  // Check if run entry is allowed
-  const isRunEntryAllowed = () => {
-    if (!striker || !nonStriker) {
-      return false;
+  const handleAddRun = (runs: number, extraType?: string) => {
+    // Block run updates when conditions aren't met
+    if (isOverComplete && !currentBowler) {
+      toast.error("Please select a bowler before adding runs");
+      return;
     }
     
-    if (isOverComplete && !currentBowler) {
-      return false;
+    if (!striker || !nonStriker) {
+      toast.error("Please select both batsmen before adding runs");
+      return;
     }
     
     if (!bowler) {
-      return false;
-    }
-    
-    return true;
-  };
-
-  const handleAddRun = (runs: number, extraType?: string) => {
-    // Block run updates when conditions aren't met
-    if (!isRunEntryAllowed()) {
-      let errorMsg = "Cannot add runs: ";
-      if (!striker || !nonStriker) {
-        errorMsg += "Please select both batsmen first.";
-      } else if (isOverComplete && !currentBowler) {
-        errorMsg += "Over is complete. Please select a new bowler.";
-      } else if (!bowler) {
-        errorMsg += "Please select a bowler first.";
-      }
-      
-      toast.error(errorMsg);
+      toast.error("Please select a bowler first");
       return;
     }
 
@@ -474,17 +441,8 @@ export default function Index() {
 
   const handleWicket = (wicketType?: string) => {
     // Block wicket updates when conditions aren't met
-    if (!isRunEntryAllowed()) {
-      let errorMsg = "Cannot record wicket: ";
-      if (!striker || !nonStriker) {
-        errorMsg += "Please select both batsmen first.";
-      } else if (isOverComplete && !currentBowler) {
-        errorMsg += "Over is complete. Please select a new bowler.";
-      } else if (!bowler) {
-        errorMsg += "Please select a bowler first.";
-      }
-      
-      toast.error(errorMsg);
+    if (!striker || !bowler) {
+      toast.error("Please select striker and bowler first");
       return;
     }
 
@@ -601,23 +559,17 @@ export default function Index() {
 
   // Determine batting team based on innings and toss
   const getBattingTeam = () => {
+    if (!tossInfo) return teamAName;
     if (!isSecondInnings) {
-      if (!tossInfo) return teamAName;
       return tossInfo.decision === "bat" ? tossInfo.winner : (tossInfo.winner === teamAName ? teamBName : teamAName);
     } else {
-      // In second innings, if we've stored the first innings batting team, the bowling team becomes the batting team
-      return firstInningsBowlingTeam || (firstInningsBattingTeam === teamAName ? teamBName : teamAName);
+      // In second innings, batting team is the opposite of first innings
+      return firstInningsBattingTeam === teamAName ? teamBName : teamAName;
     }
   };
 
-  // Get the batting team name
   const battingTeam = getBattingTeam();
-  // Get the bowling team name (opposite of batting team)
   const bowlingTeam = battingTeam === teamAName ? teamBName : teamAName;
-
-  // Get the appropriate player lists based on current innings
-  const currentBattingTeam = battingTeam === teamAName ? teamA : teamB;
-  const currentBowlingTeam = bowlingTeam === teamAName ? teamA : teamB;
 
   const target = isSecondInnings ? firstInningsScore + 1 : 0;
   const crr = totalBalls > 0 ? (totalRuns / (totalBalls / 6)).toFixed(2) : "0.00";
@@ -698,8 +650,12 @@ export default function Index() {
             
             <TabsContent value="control">
               <MatchControl 
-                teamA={currentBattingTeam}
-                teamB={currentBowlingTeam}
+                teamA={isSecondInnings ? 
+                  (battingTeam === teamAName ? teamA : teamB) : 
+                  teamA}
+                teamB={isSecondInnings ? 
+                  (battingTeam === teamBName ? teamB : teamA) : 
+                  teamB}
                 handleSelectBatsman={handleSelectBatsman}
                 handleSelectBowler={handleSelectBowler}
                 handleAddRun={handleAddRun}
@@ -714,7 +670,6 @@ export default function Index() {
                 totalBalls={totalBalls}
                 outPlayers={outPlayers}
                 retiredHurtPlayers={retiredHurtPlayers}
-                isRunEntryAllowed={isRunEntryAllowed}
               />
             </TabsContent>
             
