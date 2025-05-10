@@ -9,6 +9,9 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  preview: {
+    allowedHosts: ['score-it-cricket.onrender.com'],
+  },
   plugins: [
     react(),
     mode === 'development' &&
@@ -20,3 +23,4 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }));
+
