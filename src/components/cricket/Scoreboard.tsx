@@ -3,14 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
-  LineChart, Target, Clock, TrendingUp, User, Users, 
-  Award, Star, Trophy, CircleCheck, CircleDot
+  LineChart, TrendingUp, Users, Award, Star, Trophy
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ScorecardProps {
   totalRuns: number;
@@ -400,10 +398,10 @@ export default function Scoreboard({
                 </div>
               )}
               
-              {/* Latest ball information - simplified */}
+              {/* Latest ball information - updated with curved corners, longer width, shorter height */}
               {showLatestBallInfo && latestBall && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-blue-500 rounded-lg p-3 shadow-lg w-full max-w-[300px] animate-fade-in">
+                  <div className="bg-blue-500 rounded-2xl p-2 px-8 shadow-lg w-full max-w-[400px] h-16 flex items-center justify-center animate-fade-in">
                     <div className="text-lg font-bold text-white text-center">
                       {getLatestBallDescription()}
                     </div>
