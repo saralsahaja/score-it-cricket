@@ -385,7 +385,7 @@ export default function Scoreboard({
               </div>
             </div>
             
-            <div className="text-center relative h-28 flex items-center justify-center">
+            <div className="text-center relative h-32 flex items-center justify-center">
               {/* Display total runs/wickets WITH OVERS COUNT */}
               {showTotalRuns && (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -398,11 +398,11 @@ export default function Scoreboard({
                 </div>
               )}
               
-              {/* Latest ball information - updated with curved corners, longer width, shorter height */}
+              {/* Latest ball information - increased width and height with better proportions */}
               {showLatestBallInfo && latestBall && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-blue-500 rounded-2xl p-2 px-8 shadow-lg w-full max-w-[400px] h-16 flex items-center justify-center animate-fade-in">
-                    <div className="text-lg font-bold text-white text-center">
+                  <div className="bg-blue-500 rounded-3xl p-4 px-12 shadow-xl w-full max-w-[500px] h-24 flex items-center justify-center animate-fade-in border-2 border-blue-300">
+                    <div className="text-xl font-bold text-white text-center leading-tight">
                       {getLatestBallDescription()}
                     </div>
                   </div>
