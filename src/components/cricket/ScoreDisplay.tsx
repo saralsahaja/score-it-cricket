@@ -76,26 +76,26 @@ export default function ScoreDisplay({
   };
 
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
-        <Avatar className="h-16 w-16 bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-300 dark:border-blue-700 rounded-full">
+        <Avatar className="h-10 w-10 bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-300 dark:border-blue-700 rounded-full">
           {battingTeamLogo ? (
             <AvatarImage src={battingTeamLogo} alt={battingTeam} />
           ) : (
-            <AvatarFallback className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 font-bold text-2xl">{battingTeam.charAt(0)}</AvatarFallback>
+            <AvatarFallback className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 font-bold text-lg">{battingTeam.charAt(0)}</AvatarFallback>
           )}
         </Avatar>
-        <div className="font-bold text-2xl text-blue-800 dark:text-blue-300">
+        <div className="font-bold text-lg text-blue-800 dark:text-blue-300">
           {battingTeam}
         </div>
       </div>
       
-      <div className="text-center relative h-32 flex items-center justify-center">
+      <div className="text-center relative h-20 flex items-center justify-center">
         {showTotalRuns && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-6xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-3 border-indigo-300 dark:border-indigo-700 rounded-xl px-6 py-2 shadow-md">
+            <div className="text-4xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-2 border-indigo-300 dark:border-indigo-700 rounded-xl px-4 py-1 shadow-md">
               {totalRuns}/{wickets}
-              <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 Over: {oversText}
               </div>
             </div>
@@ -104,8 +104,8 @@ export default function ScoreDisplay({
         
         {showLatestBallInfo && latestBall && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-blue-500 rounded-3xl p-4 px-12 shadow-xl w-full max-w-[500px] h-24 flex items-center justify-center animate-fade-in border-2 border-blue-300">
-              <div className="text-xl font-bold text-white text-center leading-tight">
+            <div className="bg-blue-500 rounded-2xl p-2 px-6 shadow-xl max-w-[350px] h-16 flex items-center justify-center animate-fade-in border-2 border-blue-300">
+              <div className="text-sm font-bold text-white text-center leading-tight">
                 {getLatestBallDescription()}
               </div>
             </div>
@@ -114,14 +114,14 @@ export default function ScoreDisplay({
       </div>
       
       <div className="flex items-center gap-2">
-        <div className="font-bold text-2xl text-purple-800 dark:text-purple-300">
+        <div className="font-bold text-lg text-purple-800 dark:text-purple-300">
           {bowlingTeam}
         </div>
-        <Avatar className="h-16 w-16 bg-purple-100 dark:bg-purple-900/50 border-2 border-purple-300 dark:border-purple-700 rounded-full">
+        <Avatar className="h-10 w-10 bg-purple-100 dark:bg-purple-900/50 border-2 border-purple-300 dark:border-purple-700 rounded-full">
           {bowlingTeamLogo ? (
             <AvatarImage src={bowlingTeamLogo} alt={bowlingTeam} />
           ) : (
-            <AvatarFallback className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200 font-bold text-2xl">{bowlingTeam.charAt(0)}</AvatarFallback>
+            <AvatarFallback className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200 font-bold text-lg">{bowlingTeam.charAt(0)}</AvatarFallback>
           )}
         </Avatar>
       </div>

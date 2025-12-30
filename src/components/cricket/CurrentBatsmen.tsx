@@ -46,11 +46,11 @@ export default function CurrentBatsmen({
   const oversText = `${overs}.${balls}`;
 
   return (
-    <Card className="overflow-hidden border-none shadow-lg dark:bg-gray-800">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-800 dark:to-blue-900 text-white p-3 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Users className="h-6 w-6" />
-          <h3 className="font-bold text-2xl">Current Batsmen</h3>
+    <Card className="overflow-hidden border-none shadow-md dark:bg-gray-800">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-800 dark:to-blue-900 text-white p-2 flex justify-between items-center">
+        <div className="flex items-center gap-1">
+          <Users className="h-4 w-4" />
+          <h3 className="font-bold text-sm">Batsmen</h3>
         </div>
         <Link 
           to="/match-records" 
@@ -69,54 +69,50 @@ export default function CurrentBatsmen({
             crr,
             oversText
           }} 
-          className="text-white hover:underline bg-blue-700 dark:bg-blue-600 px-3 py-1 rounded-lg text-sm"
+          className="text-white hover:underline bg-blue-700 dark:bg-blue-600 px-2 py-0.5 rounded text-xs"
         >
-          View All Details
+          View All
         </Link>
       </div>
-      <CardContent className="p-4 border-3 border-blue-300 dark:border-blue-700 dark:bg-gray-800">
+      <CardContent className="p-2 border border-blue-300 dark:border-blue-700 dark:bg-gray-800">
         {activeBatsmen.length === 0 ? (
-          <div className="text-muted-foreground italic text-center p-4 text-lg">
-            No batsmen selected yet
+          <div className="text-muted-foreground italic text-center p-2 text-sm">
+            No batsmen selected
           </div>
         ) : (
-          <div className="space-y-2">
-            <div className="grid grid-cols-12 text-sm text-blue-700 dark:text-blue-300 px-2 font-semibold">
+          <div className="space-y-1">
+            <div className="grid grid-cols-12 text-xs text-blue-700 dark:text-blue-300 px-1 font-semibold">
               <div className="col-span-4">Batsman</div>
               <div className="col-span-2 text-center">R</div>
               <div className="col-span-2 text-center">B</div>
               <div className="col-span-2 text-center">SR</div>
-              <div className="col-span-1 text-center">4s</div>
-              <div className="col-span-1 text-center">6s</div>
+              <div className="col-span-1 text-center">4</div>
+              <div className="col-span-1 text-center">6</div>
             </div>
             
             {activeBatsmen.map((b, i) => {
               if (!b) return null;
               const isStriker = b.name === striker;
-              const strikeRate = b.balls > 0 ? ((b.runs / b.balls) * 100).toFixed(1) : "0.0";
+              const strikeRate = b.balls > 0 ? ((b.runs / b.balls) * 100).toFixed(0) : "0";
               
               return (
                 <div 
                   key={i} 
-                  className={`grid grid-cols-12 p-2 rounded-md ${
+                  className={`grid grid-cols-12 p-1 rounded text-sm ${
                     isStriker 
-                      ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-2 border-blue-300 dark:border-blue-700' 
-                      : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-2 border-green-300 dark:border-green-700'
+                      ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border border-blue-300 dark:border-blue-700' 
+                      : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border border-green-300 dark:border-green-700'
                   }`}
                 >
-                  <div className="col-span-4 font-medium flex items-center text-xl">
+                  <div className="col-span-4 font-medium flex items-center text-sm truncate">
                     {b.name} 
-                    {isStriker && <Badge className="ml-1 bg-blue-500 text-white">*</Badge>}
+                    {isStriker && <Badge className="ml-1 bg-blue-500 text-white text-xs px-1">*</Badge>}
                   </div>
-                  <div className="col-span-2 text-center font-bold text-xl">{b.runs}</div>
-                  <div className="col-span-2 text-center text-xl">{b.balls}</div>
-                  <div className="col-span-2 text-center">{strikeRate}</div>
-                  <div className="col-span-1 text-center">
-                    <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-base">{b.fours}</Badge>
-                  </div>
-                  <div className="col-span-1 text-center">
-                    <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900 text-base">{b.sixes}</Badge>
-                  </div>
+                  <div className="col-span-2 text-center font-bold">{b.runs}</div>
+                  <div className="col-span-2 text-center">{b.balls}</div>
+                  <div className="col-span-2 text-center text-xs">{strikeRate}</div>
+                  <div className="col-span-1 text-center text-xs">{b.fours}</div>
+                  <div className="col-span-1 text-center text-xs">{b.sixes}</div>
                 </div>
               );
             })}

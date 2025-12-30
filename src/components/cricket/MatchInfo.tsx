@@ -34,35 +34,35 @@ export default function MatchInfo({
     switch (matchInfoType) {
       case 'toss':
         return tossWinner && tossDecision ? (
-          <div className="text-amber-800 dark:text-amber-200">
-            Toss: {tossWinner} won the toss and elected to {tossDecision} first
+          <div className="text-amber-800 dark:text-amber-200 text-xs">
+            Toss: {tossWinner} won and elected to {tossDecision} first
           </div>
         ) : (
-          <div className="text-amber-800 dark:text-amber-200">Match in progress</div>
+          <div className="text-amber-800 dark:text-amber-200 text-xs">Match in progress</div>
         );
       case 'lastWicket':
         return lastWicketType && outPlayers.length > 0 ? (
-          <div className="text-red-800 dark:text-red-200">
+          <div className="text-red-800 dark:text-red-200 text-xs">
             Last Wicket: {outPlayers[outPlayers.length-1]} ({lastWicketType})
           </div>
         ) : (
-          <div className="text-amber-800 dark:text-amber-200">No wickets yet</div>
+          <div className="text-amber-800 dark:text-amber-200 text-xs">No wickets yet</div>
         );
       case 'bestBowler':
         return bestBowler ? (
-          <div className="text-green-800 dark:text-green-200">
+          <div className="text-green-800 dark:text-green-200 text-xs">
             Best Bowler: {bestBowler.name} ({bestBowler.wickets}/{bestBowler.runs})
           </div>
         ) : (
-          <div className="text-amber-800 dark:text-amber-200">Bowling stats pending</div>
+          <div className="text-amber-800 dark:text-amber-200 text-xs">Bowling stats pending</div>
         );
       default:
-        return <div className="text-amber-800 dark:text-amber-200">Match in progress</div>;
+        return <div className="text-amber-800 dark:text-amber-200 text-xs">Match in progress</div>;
     }
   };
 
   return (
-    <div className="mb-4 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg text-center font-medium min-h-[40px]">
+    <div className="mb-2 bg-amber-100 dark:bg-amber-900/30 p-1.5 rounded-lg text-center font-medium">
       {getMatchInfoContent()}
     </div>
   );

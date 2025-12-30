@@ -73,16 +73,16 @@ export default function Scoreboard({
   const partnershipBalls = activeBatsmen.reduce((total, batter) => total + (batter?.balls || 0), 0);
   
   return (
-    <Card className="shadow-lg border-4 border-primary rounded-xl overflow-hidden dark:bg-gray-800 relative">
-      <CardContent className="space-y-6 p-6">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <LineChart className="h-7 w-7 text-primary" />
-          <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
+    <Card className="shadow-lg border-2 border-primary rounded-xl overflow-hidden dark:bg-gray-800 relative">
+      <CardContent className="space-y-2 p-3">
+        <div className="flex items-center justify-center gap-2">
+          <LineChart className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
             {gameTitle}
           </h2>
         </div>
         
-        <div className="bg-gradient-to-r from-blue-100 via-purple-100 to-blue-100 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-blue-900/40 rounded-lg p-6 border-2 border-primary">
+        <div className="bg-gradient-to-r from-blue-100 via-purple-100 to-blue-100 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-blue-900/40 rounded-lg p-3 border border-primary">
           <ScoreDisplay
             totalRuns={totalRuns}
             wickets={wickets}
@@ -124,9 +124,9 @@ export default function Scoreboard({
           />
         </div>
         
-        <Separator className="border-2 border-primary/20 rounded-full" />
+        <Separator className="border border-primary/20 rounded-full" />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <CurrentBatsmen
             batsmen={batsmen}
             striker={striker}
