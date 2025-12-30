@@ -104,8 +104,8 @@ export default function ScoreDisplay({
         
         {showLatestBallInfo && latestBall && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-blue-500 rounded-2xl p-2 px-6 shadow-xl max-w-[350px] h-16 flex items-center justify-center animate-fade-in border-2 border-blue-300">
-              <div className="text-sm font-bold text-white text-center leading-tight">
+            <div className="bg-blue-500 rounded-2xl py-2 px-6 shadow-xl min-w-[180px] flex items-center justify-center animate-fade-in border-2 border-blue-300">
+              <div className="text-sm font-bold text-white text-center leading-tight whitespace-nowrap">
                 {getLatestBallDescription()}
               </div>
             </div>
