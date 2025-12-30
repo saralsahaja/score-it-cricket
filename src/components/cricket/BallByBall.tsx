@@ -64,9 +64,9 @@ export default function BallByBall({
     const last12Balls = recentBalls.slice(-12);
     
     return (
-      <div className="flex flex-wrap gap-2 justify-start items-center w-full">
+      <div className="flex flex-wrap gap-1 justify-start items-center w-full">
         {last12Balls.map((ball, idx) => {
-          let ballStyle = "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg";
+          let ballStyle = "w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs";
           
           if (ball === 'W') {
             ballStyle += " bg-red-600 text-white";
@@ -117,7 +117,7 @@ export default function BallByBall({
                     const isLatestBall = Number(overNumber) === currentOverNumber && idx === balls.length - 1 && 
                                         (Number(overNumber) === currentOverNumber);
                     
-                    let ballStyle = "w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg transition-all duration-300";
+                    let ballStyle = "w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm transition-all duration-300";
                     
                     if (ball === 'W') {
                       ballStyle += " bg-red-600 animate-pulse";
@@ -160,15 +160,15 @@ export default function BallByBall({
   };
 
   return (
-    <div className="mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-4 shadow-md border border-gray-300 dark:border-gray-700">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold">Last 12 Balls</span>
+    <div className="mb-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-gray-300 dark:border-gray-700">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-semibold">Last 12 Balls</span>
         <Dialog open={showBallsPopover} onOpenChange={setShowBallsPopover}>
           <DialogTrigger asChild>
             <button 
-              className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full transition-colors"
+              className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded-full transition-colors"
             >
-              View All Balls
+              View All
             </button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-2xl">
@@ -176,7 +176,7 @@ export default function BallByBall({
           </DialogContent>
         </Dialog>
       </div>
-      <div className="flex items-center justify-center overflow-x-auto py-2">
+      <div className="flex items-center justify-center overflow-x-auto py-1">
         {renderLastTwelveBalls()}
       </div>
     </div>
