@@ -93,7 +93,7 @@ export default function ScoreDisplay({
       <div className="text-center relative h-20 flex items-center justify-center">
         {showTotalRuns && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-4xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-2 border-indigo-300 dark:border-indigo-700 rounded-xl px-4 py-1 shadow-md">
+            <div className="text-4xl font-bold bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 border-2 border-indigo-300 dark:border-indigo-700 rounded-2xl px-12 py-1 shadow-md min-w-[180px]">
               {totalRuns}/{wickets}
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 Over: {oversText}

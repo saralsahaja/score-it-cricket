@@ -45,16 +45,24 @@ export default function BallByBall({
 
   const groupBallsByOver = () => {
     const groupedBalls: { [key: number]: string[] } = {};
+    let legalBallCount = 0;
     
-    for (let i = recentBalls.length - 1; i >= 0; i--) {
-      const ballIndexInMatch = totalBalls - (recentBalls.length - 1 - i);
-      const overNumber = Math.floor(ballIndexInMatch / 6);
+    // Count legal balls to determine which over each ball belongs to
+    // Extras (WD, NB) don't count as legal deliveries but stay in the same over
+    for (let i = 0; i < recentBalls.length; i++) {
+      const ball = recentBalls[i];
+      const currentOver = Math.floor(legalBallCount / 6);
       
-      if (!groupedBalls[overNumber]) {
-        groupedBalls[overNumber] = [];
+      if (!groupedBalls[currentOver]) {
+        groupedBalls[currentOver] = [];
       }
       
-      groupedBalls[overNumber].unshift(recentBalls[i]);
+      groupedBalls[currentOver].push(ball);
+      
+      // Only increment legal ball count for legal deliveries (not WD or NB)
+      if (!['WD', 'NB'].includes(ball)) {
+        legalBallCount++;
+      }
     }
     
     return groupedBalls;
