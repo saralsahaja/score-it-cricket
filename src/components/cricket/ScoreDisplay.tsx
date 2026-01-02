@@ -75,6 +75,26 @@ export default function ScoreDisplay({
     }
   };
 
+  const getBallInfoStyle = () => {
+    if (!latestBall) return 'bg-blue-500 border-blue-300';
+    
+    switch (latestBall) {
+      case 'W':
+        return 'bg-red-600 border-red-400 animate-pulse';
+      case '4':
+        return 'bg-green-500 border-green-300 animate-bounce';
+      case '6':
+        return 'bg-green-600 border-green-400 animate-bounce';
+      case 'WD':
+      case 'NB':
+      case 'LB':
+      case 'OT':
+        return 'bg-yellow-500 border-yellow-300';
+      default:
+        return 'bg-blue-500 border-blue-300';
+    }
+  };
+
   return (
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
@@ -104,7 +124,7 @@ export default function ScoreDisplay({
         
         {showLatestBallInfo && latestBall && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-blue-500 rounded-2xl py-2 px-6 shadow-xl min-w-[180px] flex items-center justify-center animate-fade-in border-2 border-blue-300">
+            <div className={`rounded-2xl py-2 px-6 shadow-xl min-w-[180px] flex items-center justify-center animate-fade-in border-2 ${getBallInfoStyle()}`}>
               <div className="text-sm font-bold text-white text-center leading-tight whitespace-nowrap">
                 {getLatestBallDescription()}
               </div>

@@ -68,38 +68,53 @@ export default function BallByBall({
     return groupedBalls;
   };
 
-  const renderLastTwelveBalls = () => {
-    const last12Balls = recentBalls.slice(-12);
+  const renderBallsByOvers = () => {
+    const groupedBalls = groupBallsByOver();
+    const currentOverNumber = Math.floor(totalBalls / 6);
+    const last2Overs = Object.entries(groupedBalls)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))
+      .slice(0, 2);
     
     return (
-      <div className="flex flex-wrap gap-1 justify-start items-center w-full">
-        {last12Balls.map((ball, idx) => {
-          let ballStyle = "w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs";
-          
-          if (ball === 'W') {
-            ballStyle += " bg-red-600 text-white";
-          } else if (ball === '4') {
-            ballStyle += " bg-blue-500 text-white";
-          } else if (ball === '6') {
-            ballStyle += " bg-purple-600 text-white";
-          } else if (ball === '0') {
-            ballStyle += " bg-gray-400 dark:bg-gray-600 text-white";
-          } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
-            ballStyle += " bg-yellow-500 text-white";
-          } else {
-            ballStyle += " bg-green-500 text-white";
-          }
-          
-          if (idx === last12Balls.length - 1) {
-            ballStyle += " ring-2 ring-yellow-300 dark:ring-yellow-500";
-          }
-          
-          return (
-            <div key={`ball-${idx}`} className={ballStyle}>
-              {ball}
+      <div className="flex flex-col gap-1 w-full">
+        {last2Overs.map(([overNumber, balls]) => (
+          <div key={`over-${overNumber}`} className="bg-white dark:bg-gray-700 rounded-lg p-1.5 border border-gray-200 dark:border-gray-600">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 min-w-[50px]">
+                Over {overNumber} {Number(overNumber) === currentOverNumber ? '•' : ''}
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {balls.map((ball, idx) => {
+                  let ballStyle = "w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs";
+                  
+                  if (ball === 'W') {
+                    ballStyle += " bg-red-600 text-white";
+                  } else if (ball === '4') {
+                    ballStyle += " bg-blue-500 text-white";
+                  } else if (ball === '6') {
+                    ballStyle += " bg-purple-600 text-white";
+                  } else if (ball === '0') {
+                    ballStyle += " bg-gray-400 dark:bg-gray-600 text-white";
+                  } else if (['WD', 'NB', 'LB', 'OT'].includes(ball)) {
+                    ballStyle += " bg-yellow-500 text-white";
+                  } else {
+                    ballStyle += " bg-green-500 text-white";
+                  }
+                  
+                  if (Number(overNumber) === currentOverNumber && idx === balls.length - 1) {
+                    ballStyle += " ring-2 ring-yellow-300 dark:ring-yellow-500";
+                  }
+                  
+                  return (
+                    <div key={`ball-${overNumber}-${idx}`} className={ballStyle}>
+                      {ball}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     );
   };
@@ -170,7 +185,7 @@ export default function BallByBall({
   return (
     <div className="mb-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-gray-300 dark:border-gray-700">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-semibold">Last 12 Balls</span>
+        <span className="text-xs font-semibold">Ball by Ball</span>
         <Dialog open={showBallsPopover} onOpenChange={setShowBallsPopover}>
           <DialogTrigger asChild>
             <button 
@@ -184,8 +199,8 @@ export default function BallByBall({
           </DialogContent>
         </Dialog>
       </div>
-      <div className="flex items-center justify-center overflow-x-auto py-1">
-        {renderLastTwelveBalls()}
+      <div className="overflow-x-auto py-1">
+        {renderBallsByOvers()}
       </div>
     </div>
   );
